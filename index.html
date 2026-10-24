@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#081526">
+<title>Blue & Grey — Cartoon VR AI Lab</title>
+
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- LABGUARD AI: Floating Molecules -->
+<div id="molecule-field" aria-hidden="true"></div>
+
+
+
+
+<div id="app"></div>
+<header>
+ <div class="brand"><div class="kicker">Blue & Grey • Interactive science</div><h1>Cartoon AI Laboratory</h1><div class="subtitle">A playful 3D lab tour — explore the stations and discover how AI assists scientists.</div></div>
+ <div class="badge">BG / AI LAB</div>
+</header>
+<section id="panel" aria-live="polite">
+ <button id="close" aria-label="Close station info">×</button><div class="eyebrow">Tap a glowing station</div>
+ <h2 id="title">Welcome, junior scientist!</h2>
+ <p id="desc">Explore the cartoon laboratory. Select a machine to see how samples, instruments, AI analysis and scientific validation fit together.</p>
+ <div class="chips" id="chips"><span class="chip">3D environment</span><span class="chip">Tap to explore</span><span class="chip">Blue • Grey • Gold</span></div>
+ <div class="callout" id="fact">Science note: AI can help identify patterns, but a prediction is not proof. Scientists check controls and validate results.</div>
+ <div id="buttons"><button id="next" class="gold">Next station →</button><button id="home">Reset view</button></div>
+</section>
+<div id="touch">
+ <div class="col"><button data-move="forward">↑</button><div style="display:flex;gap:5px"><button data-move="left">←</button><button data-move="back">↓</button><button data-move="right">→</button></div></div>
+</div>
+<div id="dpad-status" aria-live="polite">Move: idle</div>
+<div id="dpad" role="group" aria-label="Drag the joystick to move">
+  <span class="dpad-dir dpad-up">▲</span>
+  <span class="dpad-dir dpad-down">▼</span>
+  <span class="dpad-dir dpad-left">◀</span>
+  <span class="dpad-dir dpad-right">▶</span>
+  <div id="dpad-stick" role="slider" aria-label="Movement direction" aria-valuemin="-1" aria-valuemax="1" aria-valuenow="0" tabindex="0"></div>
+</div>
+<div id="hint">🤖 Lab mascot: hover for the AI guide • Drag to look • Tap stations • Mobile arrows available</div>
+
+<aside id="mascot-info" aria-hidden="true" aria-labelledby="mascot-info-title" role="dialog">
+  <div class="mascot-info-top">
+    <div><div class="mascot-kicker">LABGUARD AI • Mini lab guide</div><h2 id="mascot-info-title">Welcome, junior scientist!</h2></div>
+    <button id="mascot-info-close" type="button" aria-label="Close the mascot information panels">×</button>
+  </div>
+  <p class="mascot-intro">I’m your AI lab helper. Explore these quick panels to see how artificial intelligence can support laboratory science.</p>
+  <div class="mascot-card-grid">
+    <section class="mascot-card"><span class="card-index">01 / THE BASICS</span><h3>What is AI?</h3><p>AI software can learn patterns from examples and help classify information or make predictions. It supports scientists; it does not think or understand exactly like a person.</p></section>
+    <section class="mascot-card"><span class="card-index">02 / DATA ANALYSIS</span><h3>Spotting patterns</h3><p>AI can compare many measurements and highlight trends or unusual readings that a researcher may want to investigate. The charts in this lab are illustrative demo data.</p></section>
+    <section class="mascot-card"><span class="card-index">03 / DISEASE DISCOVERY</span><h3>Finding research clues</h3><p>AI may help researchers notice patterns in medical images, laboratory results or genetic data. A flagged pattern is only a lead for more tests—not a diagnosis.</p></section>
+    <section class="mascot-card"><span class="card-index">04 / ROBOTICS</span><h3>Helping in the lab</h3><p>Robots can assist with repetitive tasks such as moving sample racks. Instruments need calibration and maintenance, and lab procedures still need safety checks.</p></section>
+    <section class="mascot-card"><span class="card-index">05 / HUMAN OVERSIGHT</span><h3>Scientists stay in charge</h3><p>People verify data quality, check controls, consider uncertainty and decide whether results are supported by evidence. AI output should never be accepted blindly.</p></section>
+  </div>
+  <p class="mascot-footnote">Explore all five cards, then click × or press Escape to close this guide.</p>
+</aside>
+
+
+  <script type="module" src="script.js"></script>
+</body>
+</html>
