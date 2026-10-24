@@ -1,0 +1,1610 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#081526">
+<title>Blue & Grey — Cartoon VR AI Lab</title>
+<style>
+:root{--navy:#081526;--panel:#10243a;--blue:#65c6ff;--silver:#d8e2eb;--gold:#f3c86f}
+*{box-sizing:border-box}body{margin:0;background:var(--navy);color:#f4f8fc;font:15px/1.45 system-ui,Segoe UI,Arial,sans-serif;overflow:hidden;overscroll-behavior:none;-webkit-tap-highlight-color:transparent}
+#app{position:fixed;inset:0}canvas{display:block;width:100%;height:100%;touch-action:none}
+header{position:fixed;z-index:5;top:12px;left:14px;right:14px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;pointer-events:none}
+.brand{background:#081526d9;border:1px solid #3b5972;border-radius:14px;padding:10px 13px;backdrop-filter:blur(10px);max-width:min(78vw,550px)}
+.kicker{font-size:.68rem;letter-spacing:.17em;text-transform:uppercase;color:var(--gold);font-weight:900}
+h1{font-size:clamp(1.1rem,3vw,1.8rem);margin:2px 0;line-height:1.08}
+.subtitle{color:#bed0df;font-size:.78rem;margin-top:5px}
+.badge{background:#10263b;border:1px solid #45627a;border-radius:12px;padding:9px 11px;color:var(--gold);font-weight:900;letter-spacing:.08em;white-space:nowrap}
+#panel{position:fixed;z-index:6;right:14px;top:112px;width:min(330px,calc(100vw - 28px));background:#081526eF;border:1px solid #49657c;border-radius:18px;padding:16px;box-shadow:0 15px 40px #0006;backdrop-filter:blur(12px);max-height:calc(100vh - 230px);overflow:auto}
+#panel .eyebrow{font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:var(--blue);font-weight:900}
+#panel h2{font-size:1.12rem;margin:4px 0 8px}#panel p{margin:7px 0;color:#cfdae4}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}.chip{border:1px solid #49637a;color:#c7d6e3;border-radius:99px;padding:4px 8px;font-size:.7rem}
+.callout{border-left:3px solid var(--gold);padding:9px 11px;background:#f3c86f10;border-radius:0 9px 9px 0;font-size:.82rem;margin-top:12px}
+#hint{position:fixed;z-index:5;left:50%;bottom:18px;transform:translateX(-50%);max-width:calc(100vw - 24px);width:max-content;text-align:center;background:#081526e8;border:1px solid #3d5971;border-radius:14px;padding:10px 14px;color:#d3e1ed;font-size:.8rem}
+#buttons{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+button{font:inherit;cursor:pointer;border:1px solid #46637b;background:#132b42;color:#f3f8fc;border-radius:10px;padding:8px 10px}
+button:hover{border-color:var(--blue)}button.gold{color:var(--gold);border-color:#927a47}
+#close{float:right;padding:3px 8px;border-radius:8px}
+#touch{position:fixed;z-index:5;left:14px;bottom:80px;display:none;gap:8px;align-items:end}
+#touch button{width:48px;height:48px;border-radius:50%;font-size:20px;background:#0b1c2dd9}
+#touch .col{display:grid;gap:5px}
+@media(max-width:650px){#panel{top:auto;bottom:82px;left:12px;right:12px;width:auto;max-height:32vh;padding:12px}#panel h2{font-size:1rem}#panel p{font-size:.82rem}.subtitle{max-width:58vw}#hint{bottom:12px;font-size:.72rem}#touch{display:flex}header{top:8px;left:8px;right:8px}.brand{padding:8px 10px}.badge{padding:8px;font-size:.75rem}}
+@media(max-width:650px) and (orientation:landscape){#panel{right:10px;left:auto;bottom:60px;top:78px;width:min(280px,42vw);max-height:none}#touch{left:10px;bottom:58px}#hint{left:10px;right:auto;transform:none;max-width:42vw}header .subtitle{display:none}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
+
+
+/* Draggable D-pad navigation */
+#dpad{position:fixed;z-index:20;right:18px;bottom:22px;width:144px;height:144px;border-radius:50%;background:rgba(8,21,38,.86);border:2px solid #65c6ff;box-shadow:0 0 22px #65c6ff35;display:flex;align-items:center;justify-content:center;touch-action:none;user-select:none;-webkit-user-select:none}
+#dpad .dpad-dir{position:absolute;color:#d8e2eb;font-size:17px;line-height:1;pointer-events:none}
+#dpad .dpad-up{top:9px}#dpad .dpad-down{bottom:9px}#dpad .dpad-left{left:9px}#dpad .dpad-right{right:9px}
+#dpad-stick{position:absolute;width:58px;height:58px;border-radius:50%;background:linear-gradient(145deg,#8ad7ff,#1676ff);border:3px solid #e8f8ff;box-shadow:0 0 15px #65c6ff99;transform:translate(0,0);touch-action:none;cursor:grab}
+#dpad-stick:active{cursor:grabbing}
+#dpad-status{position:fixed;z-index:20;right:22px;bottom:176px;padding:6px 10px;border:1px solid #45627a;border-radius:9px;background:#081526e8;color:#d8e2eb;font-size:12px;pointer-events:none}
+@media(max-width:650px){#dpad{width:126px;height:126px;right:12px;bottom:14px}#dpad-stick{width:52px;height:52px}#dpad-status{right:14px;bottom:148px}}
+@media(max-width:650px) and (orientation:landscape){#dpad{width:112px;height:112px;right:12px;bottom:12px}#dpad-stick{width:48px;height:48px}#dpad-status{right:14px;bottom:132px}}
+
+
+/* LABGUARD AI mascot welcome bubble + hover topic cards */
+#mascot-info{position:fixed;z-index:12;left:16px;top:122px;width:min(390px,calc(100vw - 32px));max-height:calc(100vh - 215px);overflow:auto;padding:15px;border:1px solid #65c6ff;border-radius:19px;background:rgba(5,20,35,.95);box-shadow:0 0 34px rgba(101,198,255,.23),0 16px 42px rgba(0,0,0,.35);backdrop-filter:blur(14px);opacity:0;visibility:hidden;pointer-events:none;transform:translateY(10px) scale(.985);transition:opacity .18s ease,transform .18s ease,visibility .18s ease}
+#mascot-info.is-open{opacity:1;visibility:visible;pointer-events:auto;transform:translateY(0) scale(1)}
+#mascot-info .mascot-info-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+#mascot-info .mascot-kicker{font-size:.67rem;letter-spacing:.15em;text-transform:uppercase;font-weight:900;color:var(--gold)}
+#mascot-info h2{font-size:1.18rem;line-height:1.2;margin:4px 0 5px;color:#f4f8fc}
+#mascot-info .mascot-intro{margin:0 0 12px;color:#cbdce9;font-size:.83rem}
+#mascot-info-close{flex:0 0 auto;padding:3px 9px;font-size:1.1rem;line-height:1.3}
+#mascot-info .mascot-card-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+#mascot-info .mascot-card{min-width:0;padding:10px;border:1px solid #31566f;border-radius:12px;background:linear-gradient(145deg,rgba(18,47,69,.94),rgba(8,25,42,.94))}
+#mascot-info .mascot-card .card-index{display:block;margin-bottom:4px;color:var(--gold);font-size:.62rem;font-weight:900;letter-spacing:.11em}
+#mascot-info .mascot-card h3{font-size:.88rem;margin:0 0 5px;line-height:1.2;color:#8ad7ff}
+#mascot-info .mascot-card p{font-size:.76rem;line-height:1.4;margin:0;color:#d3e1ec}
+#mascot-info .mascot-footnote{margin:10px 1px 0;font-size:.7rem;color:#a9c3d4}
+@media(max-width:650px){#mascot-info{left:10px;top:auto;bottom:160px;width:min(370px,calc(100vw - 20px));max-height:44vh;padding:11px}#mascot-info .mascot-card-grid{grid-template-columns:1fr;gap:6px}#mascot-info .mascot-card{padding:8px}#mascot-info .mascot-card h3{font-size:.84rem}#mascot-info .mascot-card p{font-size:.73rem}#mascot-info h2{font-size:1.05rem}}
+@media(max-width:650px) and (orientation:landscape){#mascot-info{left:10px;right:auto;top:78px;bottom:60px;width:min(330px,40vw);max-height:none}#mascot-info .mascot-card-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(prefers-reduced-motion:reduce){#mascot-info{transition:none}}
+
+</style>
+</head>
+<body>
+  <!-- LABGUARD AI: Floating Molecules -->
+<div id="molecule-field" aria-hidden="true"></div>
+
+<style>
+  #molecule-field {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  .molecule {
+    position: absolute;
+    width: var(--size);
+    height: var(--size);
+    opacity: 0.55;
+    animation: molecule-float var(--duration) ease-in-out infinite alternate;
+    filter: drop-shadow(0 0 8px #00eaff);
+  }
+
+  .molecule svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    animation: molecule-spin var(--spin) linear infinite;
+  }
+
+  .molecule line {
+    stroke: #39dfff;
+    stroke-width: 2.5;
+    stroke-linecap: round;
+  }
+
+  .molecule circle {
+    fill: #00d9ff;
+    stroke: #baf8ff;
+    stroke-width: 1.5;
+  }
+
+  .molecule circle:nth-of-type(2n) {
+    fill: #5987ff;
+  }
+
+  @keyframes molecule-float {
+    from {
+      transform: translate3d(0, -15px, 0);
+    }
+    to {
+      transform: translate3d(20px, 25px, 0);
+    }
+  }
+
+  @keyframes molecule-spin {
+    from { rotate: 0deg; }
+    to { rotate: 360deg; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .molecule, .molecule svg {
+      animation: none;
+    }
+  }
+</style>
+
+<script>
+(() => {
+  const field = document.getElementById("molecule-field");
+  if (!field) return;
+
+  const structures = [
+    [[25, 50], [50, 25], [75, 50], [50, 75], [25, 50]],
+    [[20, 30], [50, 20], [75, 45], [60, 75], [30, 70]],
+    [[25, 25], [50, 50], [80, 25], [80, 75], [50, 80]]
+  ];
+
+  for (let i = 0; i < 12; i++) {
+    const points = structures[i % structures.length];
+    const molecule = document.createElement("div");
+    molecule.className = "molecule";
+
+    molecule.style.setProperty("--size", `${45 + Math.random() * 55}px`);
+    molecule.style.setProperty("--duration", `${5 + Math.random() * 7}s`);
+    molecule.style.setProperty("--spin", `${12 + Math.random() * 20}s`);
+    molecule.style.left = `${Math.random() * 95}%`;
+    molecule.style.top = `${Math.random() * 90}%`;
+    molecule.style.animationDelay = `${-Math.random() * 10}s`;
+
+    const lines = points.slice(1).map((p, j) =>
+      `<line x1="${points[j][0]}" y1="${points[j][1]}" x2="${p[0]}" y2="${p[1]}"/>`
+    ).join("");
+
+    const atoms = points.map(p =>
+      `<circle cx="${p[0]}" cy="${p[1]}" r="6"/>`
+    ).join("");
+
+    molecule.innerHTML = `
+      <svg viewBox="0 0 100 100">
+        ${lines}
+        ${atoms}
+      </svg>
+    `;
+
+    field.appendChild(molecule);
+  }
+})();
+</script>
+<div id="app"></div>
+<header>
+ <div class="brand"><div class="kicker">Blue & Grey • Interactive science</div><h1>Cartoon AI Laboratory</h1><div class="subtitle">A playful 3D lab tour — explore the stations and discover how AI assists scientists.</div></div>
+ <div class="badge">BG / AI LAB</div>
+</header>
+<section id="panel" aria-live="polite">
+ <button id="close" aria-label="Close station info">×</button><div class="eyebrow">Tap a glowing station</div>
+ <h2 id="title">Welcome, junior scientist!</h2>
+ <p id="desc">Explore the cartoon laboratory. Select a machine to see how samples, instruments, AI analysis and scientific validation fit together.</p>
+ <div class="chips" id="chips"><span class="chip">3D environment</span><span class="chip">Tap to explore</span><span class="chip">Blue • Grey • Gold</span></div>
+ <div class="callout" id="fact">Science note: AI can help identify patterns, but a prediction is not proof. Scientists check controls and validate results.</div>
+ <div id="buttons"><button id="next" class="gold">Next station →</button><button id="home">Reset view</button></div>
+</section>
+<div id="touch">
+ <div class="col"><button data-move="forward">↑</button><div style="display:flex;gap:5px"><button data-move="left">←</button><button data-move="back">↓</button><button data-move="right">→</button></div></div>
+</div>
+<div id="dpad-status" aria-live="polite">Move: idle</div>
+<div id="dpad" role="group" aria-label="Drag the joystick to move">
+  <span class="dpad-dir dpad-up">▲</span>
+  <span class="dpad-dir dpad-down">▼</span>
+  <span class="dpad-dir dpad-left">◀</span>
+  <span class="dpad-dir dpad-right">▶</span>
+  <div id="dpad-stick" role="slider" aria-label="Movement direction" aria-valuemin="-1" aria-valuemax="1" aria-valuenow="0" tabindex="0"></div>
+</div>
+<div id="hint">🤖 Lab mascot: hover for the AI guide • Drag to look • Tap stations • Mobile arrows available</div>
+
+<aside id="mascot-info" aria-hidden="true" aria-labelledby="mascot-info-title" role="dialog">
+  <div class="mascot-info-top">
+    <div><div class="mascot-kicker">LABGUARD AI • Mini lab guide</div><h2 id="mascot-info-title">Welcome, junior scientist!</h2></div>
+    <button id="mascot-info-close" type="button" aria-label="Close the mascot information panels">×</button>
+  </div>
+  <p class="mascot-intro">I’m your AI lab helper. Explore these quick panels to see how artificial intelligence can support laboratory science.</p>
+  <div class="mascot-card-grid">
+    <section class="mascot-card"><span class="card-index">01 / THE BASICS</span><h3>What is AI?</h3><p>AI software can learn patterns from examples and help classify information or make predictions. It supports scientists; it does not think or understand exactly like a person.</p></section>
+    <section class="mascot-card"><span class="card-index">02 / DATA ANALYSIS</span><h3>Spotting patterns</h3><p>AI can compare many measurements and highlight trends or unusual readings that a researcher may want to investigate. The charts in this lab are illustrative demo data.</p></section>
+    <section class="mascot-card"><span class="card-index">03 / DISEASE DISCOVERY</span><h3>Finding research clues</h3><p>AI may help researchers notice patterns in medical images, laboratory results or genetic data. A flagged pattern is only a lead for more tests—not a diagnosis.</p></section>
+    <section class="mascot-card"><span class="card-index">04 / ROBOTICS</span><h3>Helping in the lab</h3><p>Robots can assist with repetitive tasks such as moving sample racks. Instruments need calibration and maintenance, and lab procedures still need safety checks.</p></section>
+    <section class="mascot-card"><span class="card-index">05 / HUMAN OVERSIGHT</span><h3>Scientists stay in charge</h3><p>People verify data quality, check controls, consider uncertainty and decide whether results are supported by evidence. AI output should never be accepted blindly.</p></section>
+  </div>
+  <p class="mascot-footnote">Explore all five cards, then click × or press Escape to close this guide.</p>
+</aside>
+
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js';
+import { VRButton } from 'https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/webxr/VRButton.js';
+
+const app=document.getElementById('app');
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x9ad9ff);scene.fog=new THREE.Fog(0x9ad9ff,14,34);
+const camera=new THREE.PerspectiveCamera(70,innerWidth/innerHeight,.1,100);camera.position.set(0,1.65,7);
+const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.xr.enabled=true;renderer.outputColorSpace=THREE.SRGBColorSpace;app.appendChild(renderer.domElement);
+document.body.appendChild(VRButton.createButton(renderer));
+scene.add(new THREE.HemisphereLight(0xe4f7ff,0x64788d,2.1));
+const sun=new THREE.DirectionalLight(0xfff1ce,3.2);sun.position.set(-5,10,7);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);scene.add(sun);
+const fill=new THREE.PointLight(0x55bfff,18,15);fill.position.set(0,4,0);scene.add(fill);
+const mat=(color,roughness=.72,metalness=.04)=>new THREE.MeshStandardMaterial({color,roughness,metalness});
+const M={navy:mat(0x10263d),blue:mat(0x4caee8),lightBlue:mat(0x8ad7ff),silver:mat(0xd6e0e8),white:mat(0xf4f7fa),grey:mat(0x8296a8),dark:mat(0x23394d),gold:mat(0xf3c86f,.38,.12),glass:new THREE.MeshPhysicalMaterial({color:0x8be0ff,transparent:true,opacity:.55,roughness:.18,metalness:0}),green:mat(0x8ddbb7)};
+function box(parent,x,y,z,w,h,d,material,round=false){const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material);mesh.position.set(x,y,z);mesh.castShadow=true;mesh.receiveShadow=true;parent.add(mesh);return mesh}
+function sphere(parent,x,y,z,r,material){const mesh=new THREE.Mesh(new THREE.SphereGeometry(r,20,14),material);mesh.position.set(x,y,z);mesh.castShadow=true;parent.add(mesh);return mesh}
+function cyl(parent,x,y,z,rt,rb,h,material,segments=20){const mesh=new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,segments),material);mesh.position.set(x,y,z);mesh.castShadow=true;parent.add(mesh);return mesh}
+function roundedLabel(text){const canvas=document.createElement('canvas');canvas.width=512;canvas.height=128;const c=canvas.getContext('2d');c.fillStyle='#081526';c.strokeStyle='#f3c86f';c.lineWidth=6;roundRect(c,8,8,496,112,24);c.fill();c.stroke();c.font='bold 34px system-ui';c.fillStyle='#f4f8fc';c.textAlign='center';c.textBaseline='middle';c.fillText(text,256,64);const tex=new THREE.CanvasTexture(canvas);tex.colorSpace=THREE.SRGBColorSpace;const m=new THREE.MeshBasicMaterial({map:tex,transparent:true,side:THREE.DoubleSide});return m}
+function roundRect(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath()}
+const floor=box(scene,0,-.16,0,30,.3,22,mat(0xb7c7d4));floor.receiveShadow=true;
+const grid=new THREE.GridHelper(30,30,0x66859d,0x9aaebb);grid.position.y=.001;scene.add(grid);
+const wallMat=mat(0x24435c), sideMat=mat(0x1b354b);
+box(scene,0,2.5,-5.7,30,5,.3,wallMat);box(scene,-14.8,2.5,0,.3,5,11,sideMat);box(scene,14.8,2.5,0,.3,5,11,sideMat);
+
+// Framed science and human-body posters on both side walls.
+// Each poster is a canvas-textured 3D panel attached to the wall, with the artwork
+// drawn locally so the posters remain crisp without external image dependencies.
+function makeSciencePosterArtwork(type, title, subtitle, accent, number) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 720;
+  canvas.height = 900;
+  const c = canvas.getContext('2d');
+  const bg = c.createLinearGradient(0, 0, 720, 900);
+  bg.addColorStop(0, '#0b2941');
+  bg.addColorStop(1, '#061522');
+  c.fillStyle = bg;
+  c.fillRect(0, 0, 720, 900);
+  c.strokeStyle = accent;
+  c.lineWidth = 8;
+  c.strokeRect(18, 18, 684, 864);
+  c.strokeStyle = '#284d66';
+  c.lineWidth = 2;
+  c.strokeRect(36, 36, 648, 828);
+
+  c.textAlign = 'left';
+  c.fillStyle = '#f3c86f';
+  c.font = 'bold 21px Arial';
+  c.fillText(`HUMAN BIOLOGY  /  ${number}`, 54, 78);
+  c.fillStyle = '#f4f8fc';
+  c.font = 'bold 39px Arial';
+  const titleWords = title.split(' ');
+  let titleLines = [];
+  let line = '';
+  for (const word of titleWords) {
+    const test = line ? line + ' ' + word : word;
+    if (c.measureText(test).width > 605 && line) { titleLines.push(line); line = word; }
+    else line = test;
+  }
+  if (line) titleLines.push(line);
+  titleLines.slice(0, 2).forEach((t, i) => c.fillText(t, 54, 128 + i * 44));
+  const subtitleY = 147 + Math.min(titleLines.length, 2) * 42;
+  c.fillStyle = '#a9c9dd';
+  c.font = '21px Arial';
+  c.fillText(subtitle, 54, subtitleY);
+
+  // A subtle diagram plate behind the main illustration.
+  c.fillStyle = '#0c2235';
+  c.fillRect(48, 220, 624, 490);
+  c.strokeStyle = '#214b65';
+  c.lineWidth = 2;
+  c.strokeRect(48, 220, 624, 490);
+  const cx = 360;
+
+  if (type === 'body') {
+    // Full-body outline with highlighted organ systems.
+    c.lineCap = 'round'; c.lineJoin = 'round';
+    c.strokeStyle = '#8bbad4'; c.lineWidth = 48;
+    c.beginPath(); c.moveTo(cx, 335); c.lineTo(cx, 500); c.stroke();
+    c.beginPath(); c.moveTo(cx, 380); c.lineTo(260, 470); c.moveTo(cx, 380); c.lineTo(460, 470); c.stroke();
+    c.beginPath(); c.moveTo(cx, 495); c.lineTo(300, 625); c.moveTo(cx, 495); c.lineTo(420, 625); c.stroke();
+    c.fillStyle = '#8bbad4'; c.beginPath(); c.arc(cx, 285, 43, 0, Math.PI * 2); c.fill();
+    c.strokeStyle = '#65c6ff'; c.lineWidth = 12; c.beginPath(); c.moveTo(cx, 325); c.lineTo(cx, 495); c.stroke();
+    c.strokeStyle = '#f16e78'; c.lineWidth = 10; c.beginPath(); c.moveTo(cx, 365); c.lineTo(cx, 455); c.stroke();
+    c.fillStyle = '#ef6874'; c.beginPath(); c.arc(cx - 18, 402, 22, 0, Math.PI * 2); c.fill();
+    c.fillStyle = '#8ddbb7'; c.beginPath(); c.ellipse(cx - 38, 420, 16, 35, -.25, 0, Math.PI * 2); c.ellipse(cx + 38, 420, 16, 35, .25, 0, Math.PI * 2); c.fill();
+    c.strokeStyle = '#f3c86f'; c.lineWidth = 6; c.beginPath(); c.moveTo(cx, 275); c.lineTo(cx, 360); c.lineTo(cx - 30, 400); c.moveTo(cx, 360); c.lineTo(cx + 30, 400); c.stroke();
+    c.fillStyle = '#d9e8f4'; c.font = '20px Arial';
+    c.fillText('Nervous system', 72, 665); c.fillStyle = '#f16e78'; c.fillText('Circulatory', 275, 665); c.fillStyle = '#8ddbb7'; c.fillText('Respiratory', 472, 665);
+  } else if (type === 'heart') {
+    // Stylized heart, great vessels and major chamber separation.
+    c.save(); c.translate(cx, 435); c.scale(1.13, 1.13);
+    c.fillStyle = '#c94f65'; c.strokeStyle = '#ff9b9f'; c.lineWidth = 6;
+    c.beginPath(); c.moveTo(0, 112); c.bezierCurveTo(-40, 68, -142, 6, -126, -62); c.bezierCurveTo(-113, -122, -38, -128, 0, -77); c.bezierCurveTo(38, -128, 113, -122, 126, -62); c.bezierCurveTo(142, 6, 40, 68, 0, 112); c.closePath(); c.fill(); c.stroke();
+    c.fillStyle = '#e77b87'; c.beginPath(); c.moveTo(0, -72); c.lineTo(0, 104); c.bezierCurveTo(-40, 54, -74, 3, -63, -43); c.bezierCurveTo(-48, -77, -16, -77, 0, -72); c.fill();
+    c.fillStyle = '#6cc9ec'; c.beginPath(); c.moveTo(0, -70); c.bezierCurveTo(46, -107, 86, -88, 78, -37); c.bezierCurveTo(68, 6, 36, 56, 0, 104); c.closePath(); c.fill();
+    c.strokeStyle = '#5aabda'; c.lineWidth = 22; c.beginPath(); c.moveTo(-30, -68); c.bezierCurveTo(-65, -135, -36, -151, -16, -125); c.stroke();
+    c.strokeStyle = '#d7556a'; c.beginPath(); c.moveTo(32, -67); c.bezierCurveTo(64, -140, 89, -139, 89, -104); c.stroke(); c.restore();
+    c.fillStyle = '#ff9b9f'; c.font = 'bold 22px Arial'; c.fillText('PUMP', 90, 654);
+    c.fillStyle = '#d9e8f4'; c.font = '20px Arial'; c.fillText('Blood carries oxygen and nutrients.', 90, 686);
+  } else if (type === 'dna') {
+    c.lineWidth = 9; c.lineCap = 'round';
+    c.strokeStyle = '#65c6ff'; c.beginPath();
+    for (let y = 255; y <= 660; y += 4) { const x = cx + Math.sin((y - 255) / 34) * 120; if (y === 255) c.moveTo(x, y); else c.lineTo(x, y); }
+    c.stroke();
+    c.strokeStyle = '#8ddbb7'; c.beginPath();
+    for (let y = 255; y <= 660; y += 4) { const x = cx - Math.sin((y - 255) / 34) * 120; if (y === 255) c.moveTo(x, y); else c.lineTo(x, y); }
+    c.stroke();
+    for (let y = 270; y <= 650; y += 30) {
+      c.strokeStyle = '#f3c86f'; c.lineWidth = 5;
+      c.beginPath(); c.moveTo(cx + Math.sin((y - 255) / 34) * 120, y); c.lineTo(cx - Math.sin((y - 255) / 34) * 120, y); c.stroke();
+    }
+    c.fillStyle = '#d9e8f4'; c.font = '20px Arial'; c.textAlign = 'center';
+    c.fillText('DNA stores genetic instructions', cx, 686);
+  } else if (type === 'brain') {
+    // Rounded brain lobes and simple neural pathways.
+    const lobes = [[-75,-20,64],[-30,-62,62],[36,-62,62],[80,-12,60],[47,42,58],[-35,42,60],[-95,28,43]];
+    c.fillStyle = '#dca9bb'; c.strokeStyle = '#f3d5df'; c.lineWidth = 5;
+    lobes.forEach(([x,y,r]) => { c.beginPath(); c.arc(cx+x, 445+y, r, 0, Math.PI*2); c.fill(); c.stroke(); });
+    c.strokeStyle = '#9d657e'; c.lineWidth = 5;
+    [[-95, -28, -62, -5],[-46,-96,-22,-28],[-5,-22,18,-74],[40,-82,61,-25],[70,8,25,30],[-55,4,-24,42],[-10,40,15,5]].forEach(([x1,y1,x2,y2]) => { c.beginPath(); c.moveTo(cx+x1,445+y1); c.bezierCurveTo(cx+x1+15,445+y1+20,cx+x2-15,445+y2-20,cx+x2,445+y2); c.stroke(); });
+    c.fillStyle = '#d9e8f4'; c.font = '20px Arial'; c.textAlign = 'center'; c.fillText('Billions of neurons communicate', cx, 640); c.fillText('through electrical and chemical signals.', cx, 674);
+  } else if (type === 'lungs') {
+    // Trachea and branching bronchi into two lungs.
+    c.strokeStyle = '#9ac9e0'; c.lineWidth = 25; c.lineCap = 'round'; c.beginPath(); c.moveTo(cx, 280); c.lineTo(cx, 425); c.stroke();
+    c.strokeStyle = '#f3c86f'; c.lineWidth = 8;
+    for (let y = 295; y < 410; y += 26) { c.beginPath(); c.moveTo(cx-13,y); c.lineTo(cx+13,y); c.stroke(); }
+    c.fillStyle = '#db8c9d'; c.strokeStyle = '#f5b7c5'; c.lineWidth = 7;
+    c.beginPath(); c.moveTo(cx-18, 405); c.bezierCurveTo(cx-78, 362,cx-154,390,cx-154,478); c.bezierCurveTo(cx-155,560,cx-100,602,cx-40,580); c.bezierCurveTo(cx-10,557,cx-7,477,cx-18,405); c.fill(); c.stroke();
+    c.beginPath(); c.moveTo(cx+18, 405); c.bezierCurveTo(cx+78,362,cx+154,390,cx+154,478); c.bezierCurveTo(cx+155,560,cx+100,602,cx+40,580); c.bezierCurveTo(cx+10,557,cx+7,477,cx+18,405); c.fill(); c.stroke();
+    c.strokeStyle = '#ffe0e5'; c.lineWidth = 10; c.beginPath(); c.moveTo(cx, 420); c.lineTo(cx-60, 475); c.moveTo(cx,420); c.lineTo(cx+60,475); c.stroke();
+    c.strokeStyle = '#ffe0e5'; c.lineWidth = 6; [[-60,475,-100,505],[-60,475,-35,530],[60,475,100,505],[60,475,35,530]].forEach(([x1,y1,x2,y2])=>{c.beginPath();c.moveTo(cx+x1,y1);c.lineTo(cx+x2,y2);c.stroke()});
+    c.fillStyle = '#d9e8f4'; c.font = '20px Arial'; c.textAlign = 'center'; c.fillText('Oxygen enters the blood in tiny', cx, 650); c.fillText('air sacs called alveoli.', cx, 682);
+  } else if (type === 'cell') {
+    c.strokeStyle = '#65c6ff'; c.lineWidth = 12; c.fillStyle = '#143e59';
+    c.beginPath(); c.ellipse(cx, 455, 218, 172, -.12, 0, Math.PI*2); c.fill(); c.stroke();
+    c.fillStyle = '#9a84d9'; c.strokeStyle = '#c4b7ff'; c.lineWidth = 7;
+    c.beginPath(); c.ellipse(cx-20, 450, 66, 58, .25, 0, Math.PI*2); c.fill(); c.stroke();
+    [[-110,-56],[97,-78],[120,52],[-95,82],[32,100]].forEach(([dx,dy],i)=>{
+      c.fillStyle = i%2 ? '#f3c86f' : '#8ddbb7'; c.strokeStyle = i%2 ? '#ffe39b' : '#b6f0d4';
+      c.beginPath(); c.ellipse(cx+dx,455+dy,34,17, i*.4,0,Math.PI*2); c.fill(); c.stroke();
+      c.strokeStyle = '#0c2940'; c.lineWidth = 4; c.beginPath(); c.moveTo(cx+dx-18,455+dy); c.bezierCurveTo(cx+dx-4,455+dy-13,cx+dx+8,455+dy+13,cx+dx+18,455+dy); c.stroke();
+    });
+    c.fillStyle = '#d9e8f4'; c.font = '20px Arial'; c.textAlign = 'center'; c.fillText('Membrane • Nucleus • Organelles', cx, 665);
+  }
+
+  // Consistent footer gives the posters a classroom-style infographic finish.
+  c.textAlign = 'left';
+  c.fillStyle = '#f3c86f'; c.font = 'bold 18px Arial';
+  c.fillText('LOOK CLOSER  •  ASK QUESTIONS  •  TEST IDEAS', 54, 790);
+  c.fillStyle = '#8eafc4'; c.font = '17px Arial';
+  c.fillText('Illustrative educational diagram', 54, 827);
+  c.fillStyle = accent; c.fillRect(54, 842, 120, 5);
+  return canvas;
+}
+
+function addScienceWallPoster({ side, z, type, title, subtitle, accent, number }) {
+  const group = new THREE.Group();
+  group.position.set(side === 'left' ? -14.61 : 14.61, 2.95, z);
+  group.rotation.y = side === 'left' ? Math.PI / 2 : -Math.PI / 2;
+  scene.add(group);
+
+  // Silver frame, navy backing, and emissive-looking printed artwork.
+  box(group, 0, 0, 0, 1.62, 1.90, 0.10, M.silver);
+  box(group, 0, 0, 0.039, 1.51, 1.79, 0.022, M.navy);
+  const art = makeSciencePosterArtwork(type, title, subtitle, accent, number);
+  const texture = new THREE.CanvasTexture(art);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.anisotropy = Math.min(renderer.capabilities.getMaxAnisotropy(), 8);
+  const poster = new THREE.Mesh(
+    new THREE.PlaneGeometry(1.49, 1.77),
+    new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide })
+  );
+  poster.position.z = 0.053;
+  group.add(poster);
+
+  // Small illuminated title strip and mounting caps add a realistic framed finish.
+  const trim = new THREE.MeshStandardMaterial({ color: accent, emissive: accent, emissiveIntensity: 0.22, metalness: 0.2, roughness: 0.42 });
+  box(group, 0, 0.914, 0.02, 0.40, 0.025, 0.035, trim);
+  sphere(group, -0.70, 0.79, 0.055, 0.025, M.gold);
+  sphere(group, 0.70, 0.79, 0.055, 0.025, M.gold);
+  return group;
+}
+
+const scienceWallPosters = [
+  // Left wall: body systems, heart anatomy and DNA.
+  { side: 'left', z: -3.65, type: 'body', title: 'THE HUMAN BODY', subtitle: 'Systems work together', accent: '#65c6ff', number: '01' },
+  { side: 'left', z: -0.15, type: 'heart', title: 'THE HUMAN HEART', subtitle: 'A muscular pump', accent: '#f16e78', number: '02' },
+  { side: 'left', z: 2.45, type: 'dna', title: 'DNA & GENETICS', subtitle: 'Instructions inside cells', accent: '#8ddbb7', number: '03' },
+  // Right wall: brain, breathing and cell biology.
+  { side: 'right', z: -3.65, type: 'brain', title: 'THE BRAIN', subtitle: 'The body’s control centre', accent: '#dca9bb', number: '04' },
+  { side: 'right', z: -0.15, type: 'lungs', title: 'THE LUNGS', subtitle: 'Breathing and gas exchange', accent: '#ff9cad', number: '05' },
+  { side: 'right', z: 3.25, type: 'cell', title: 'INSIDE A CELL', subtitle: 'The basic unit of life', accent: '#a997ff', number: '06' }
+];
+scienceWallPosters.forEach(addScienceWallPoster);
+for(let i=-12;i<=12;i+=4){box(scene,i,4.75,-5.48,2.4,.12,.15,M.lightBlue);box(scene,i,4.68,-5.48,1.9,.04,.2,M.white)}
+// Large cartoon window moved to the right wall section; the operations dashboard now occupies its former left-side position.
+box(scene,6.7,2.8,-5.48,3.3,2.2,.08,M.blue);box(scene,6.7,2.8,-5.4,3.05,1.95,.06,mat(0x6fbbe6));box(scene,6.7,2.8,-5.32,.09,2,.1,M.silver);box(scene,6.7,2.8,-5.31,3.05,.09,.1,M.silver);
+const sign=box(scene,2.2,4.1,-5.45,5.6,.75,.15,M.navy);const signCanvas=document.createElement('canvas');signCanvas.width=800;signCanvas.height=140;const sc=signCanvas.getContext('2d');sc.fillStyle='#10263d';sc.fillRect(0,0,800,140);sc.fillStyle='#f3c86f';sc.font='bold 46px system-ui';sc.textAlign='center';sc.fillText('BLUE & GREY  •  AI LAB',400,86);const st=new THREE.CanvasTexture(signCanvas);st.colorSpace=THREE.SRGBColorSpace;sign.material=new THREE.MeshBasicMaterial({map:st});
+// Recessed-style lighting without visible ceiling tiles/panels.
+// Keep the light sources for a bright lab, but remove the chunky overhead meshes.
+for(let x=-6;x<=6;x+=6){const l=new THREE.PointLight(0xc8ecff,7,8);l.position.set(x,4.3,-1.5);scene.add(l)}
+const stations=[];
+function stationBase(name,position){const g=new THREE.Group();g.position.set(...position);scene.add(g);g.userData.stationName=name;return g}
+function addScreen(parent,x,y,z,w=0.8,h=.48){box(parent,x,y,z,w,h,.07,M.navy);box(parent,x,y,z+.05,w-.1,h-.1,.025,M.blue);box(parent,x,y,z+.07,w-.22,.025,.02,M.gold)}
+function makeStation(id,title,position,kind,desc,chips,fact){
+ const g=stationBase(title,position);g.userData={id,title,desc,chips,fact};
+ // playful rounded-looking base assembled from simple geometric shapes
+ box(g,0,.45,0,2.0,.9,1.2,M.silver);box(g,0,.92,0,2.05,.12,1.25,M.white);box(g,0,.12,.02,1.8,.18,1.05,M.blue);
+ if(kind==='sample'){
+  addScreen(g,0,1.35,-.18,.65,.38);
+  for(let i=0;i<3;i++){cyl(g,-.52+i*.52,1.25,.28,.105,.12,.55,M.glass);cyl(g,-.52+i*.52,1.2,.28,.085,.09,.3,M.blue);cyl(g,-.52+i*.52,1.55,.28,.12,.12,.08,M.gold)}
+  box(g,0,1.75,-.2,.85,.12,.65,M.gold);
+ }else if(kind==='robot'){
+  addScreen(g,.52,1.38,-.18,.55,.35);
+  box(g,-.35,1.25,.12,.18,.55,.18,M.gold);sphere(g,-.35,1.55,.12,.15,M.gold);box(g,-.08,1.78,.12,.55,.14,.14,M.gold).rotation.z=-.35;sphere(g,.15,1.9,.12,.13,M.gold);box(g,.27,1.78,.12,.12,.32,.12,M.gold).rotation.z=.45;
+  cyl(g,.3,1.28,.35,.1,.1,.35,M.glass);cyl(g,.3,1.28,.35,.07,.07,.25,M.lightBlue);
+ }else if(kind==='microscope'){
+  box(g,-.25,1.2,0,.7,.12,.55,M.dark);box(g,-.2,1.52,-.05,.18,.58,.18,M.blue).rotation.z=-.25;cyl(g,-.38,1.83,-.05,.12,.12,.24,M.gold,12);cyl(g,-.18,1.06,.02,.08,.08,.25,M.dark);sphere(g,-.2,1.05,.04,.13,M.lightBlue);addScreen(g,.55,1.35,-.2,.55,.38);
+ }else if(kind==='ai'){
+  addScreen(g,0,1.5,-.18,1.05,.65);
+  // glowing network nodes
+  for(let i=0;i<5;i++){sphere(g,-.34+(i%3)*.32,1.5+Math.floor(i/3)*.23,-.08,.055,i%2?M.gold:M.lightBlue)}
+  box(g,0,1.08,-.15,.18,.18,.15,M.gold);
+ }else if(kind==='validate'){
+  addScreen(g,.52,1.4,-.2,.55,.38);
+  for(let i=0;i<3;i++){cyl(g,-.5+i*.35,1.23,.2,.09,.1,.38,M.glass);cyl(g,-.5+i*.35,1.16,.2,.07,.08,.22,i===1?M.green:M.blue);cyl(g,-.5+i*.35,1.45,.2,.105,.105,.06,M.gold)}
+  box(g,-.05,1.1,-.15,.55,.12,.45,M.dark);
+ }
+ const label=new THREE.Mesh(new THREE.PlaneGeometry(2.2,.48),roundedLabel(title.toUpperCase()));label.position.set(0,2.15,0);label.rotation.y=0;g.add(label);
+ // glowing selection ring on floor
+ const ring=new THREE.Mesh(new THREE.TorusGeometry(1.25,.035,8,40),new THREE.MeshBasicMaterial({color:0x65c6ff,transparent:true,opacity:.8}));ring.rotation.x=Math.PI/2;ring.position.y=.04;g.add(ring);g.userData.ring=ring;
+ stations.push(g);return g;
+}
+makeStation('intake','Sample intake',[-6,0,0],'sample','Samples receive a unique identifier and are handled using an approved procedure. The sample type and safety protocol determine the next steps.',['Traceability','Sample ID','Safety first'],'A unique ID helps prevent sample mix-ups and links the correct result to the correct sample.');
+makeStation('robot','Robotic automation',[-2.5,0,-1.5],'robot','Robotic systems can repeat routine movements, such as moving tubes or plates. They still require calibration, maintenance and human oversight.',['Automation','Repeatability','Oversight'],'Automation can improve consistency, but it does not guarantee error-free results.');
+makeStation('microscope','Microscope imaging',[2,0,0],'microscope','A microscope or other instrument captures images or measurements. Preparation, lighting, calibration and image quality affect the data AI receives.',['Imaging','Calibration','Data quality'],'Poor-quality or unrepresentative data can lead to unreliable AI outputs.');
+makeStation('ai','Data analysis',[5.8,0,-2.2],'ai','AI tools organize laboratory measurements, compare patterns and display trends in readable charts. Scientists check the data quality and interpret what the results mean.',['Data analysis','Charts & trends','AI-assisted'],'A pattern in data can guide research, but correlation alone does not prove cause.'); 
+makeStation('disease','Disease discovery',[7.0,0,2.0],'disease','Researchers can use AI to flag patterns in images or test results that may be linked to a disease. The finding is a lead for further testing, not a diagnosis by itself.',['Early clues','Pattern detection','Research support'],'Disease-related AI findings must be tested and reviewed by qualified professionals before conclusions are made.');
+makeStation('dashboard','Live data screen',[-3.7,0,3.1],'dashboard','This dashboard brings together sample status, instrument readings, analysis progress and quality checks so the team can monitor work across the lab.',['Live overview','Status tracking','Quality checks'],'A clear dashboard helps people notice missing data or instrument alerts sooner.');
+makeStation('chemicals','Reagents & dispenser',[-7.0,0,-2.5],'chemicals','Organized reagent bottles, chemical labels and a measured dispenser help the team handle materials consistently. Real laboratories follow safety data sheets, PPE rules and approved procedures.',['Lab equipment','Chemical display','Measured dispensing'],'Only trained staff should handle chemicals, and the correct label and amount must always be checked.');
+makeStation('validation','Scientific validation',[1.7,0,3.2],'validate','Scientists compare results with controls, repeat measurements when appropriate and use validated methods before drawing conclusions.',['Controls','Repeat tests','Validated methods'],'Controls help show whether a signal could come from background noise or the procedure itself.');
+
+// Realistic low-poly bench equipment for the Disease Discovery and Live Data stations.
+// Each model is attached to its station, so it moves with the bench's subtle animation.
+function makeMicroscope(parent, x, z, scale = 0.62) {
+  const g = new THREE.Group();
+  g.position.set(x, 0.985, z);
+  g.scale.setScalar(scale);
+  parent.add(g);
+
+  // Heavy foot, metal stage, rear upright and angled optical tube.
+  box(g, 0, 0.055, 0, 0.72, 0.11, 0.42, M.dark);
+  box(g, 0.015, 0.125, 0, 0.61, 0.035, 0.34, M.silver);
+  box(g, -0.19, 0.37, -0.09, 0.15, 0.53, 0.17, M.dark).rotation.z = -0.12;
+  box(g, -0.035, 0.60, -0.015, 0.20, 0.40, 0.22, M.silver).rotation.z = -0.42;
+  box(g, 0.025, 0.74, 0.015, 0.31, 0.19, 0.27, M.dark).rotation.z = -0.42;
+
+  // Eyepiece and objective turret.
+  const eyepiece = cyl(g, 0.135, 0.86, 0.015, 0.064, 0.078, 0.20, M.dark, 20);
+  eyepiece.rotation.z = -0.42;
+  cyl(g, 0.105, 0.56, 0.02, 0.105, 0.105, 0.055, M.gold, 20);
+  const objective1 = cyl(g, 0.145, 0.495, 0.055, 0.043, 0.055, 0.16, M.silver, 16);
+  objective1.rotation.z = 0.25;
+  const objective2 = cyl(g, 0.055, 0.49, 0.105, 0.035, 0.046, 0.13, M.dark, 16);
+  objective2.rotation.z = -0.10;
+
+  // Stage, slide, condenser and twin focusing knobs.
+  box(g, 0.03, 0.405, 0.10, 0.43, 0.06, 0.30, M.dark);
+  box(g, 0.045, 0.442, 0.115, 0.24, 0.012, 0.18, M.lightBlue);
+  box(g, 0.045, 0.451, 0.115, 0.12, 0.008, 0.08, M.white);
+  cyl(g, 0.02, 0.315, 0.10, 0.055, 0.055, 0.09, M.silver, 16);
+  const focusA = cyl(g, -0.245, 0.405, -0.005, 0.105, 0.105, 0.055, M.silver, 20);
+  focusA.rotation.z = Math.PI / 2;
+  const focusB = cyl(g, -0.245, 0.405, 0.065, 0.067, 0.067, 0.06, M.dark, 20);
+  focusB.rotation.z = Math.PI / 2;
+  box(g, 0.03, 0.20, 0.015, 0.22, 0.05, 0.20, M.dark);
+  sphere(g, 0.03, 0.20, 0.12, 0.035, M.blue);
+  return g;
+}
+
+function makeSampleTubeRack(parent, x, z, cols = 4) {
+  const rack = new THREE.Group();
+  rack.position.set(x, 0.985, z);
+  parent.add(rack);
+  const width = cols * 0.12 + 0.08;
+  box(rack, 0, 0.055, 0, width, 0.09, 0.30, M.dark);
+  box(rack, 0, 0.11, -0.105, width, 0.035, 0.055, M.silver);
+  box(rack, 0, 0.11, 0.105, width, 0.035, 0.055, M.silver);
+  box(rack, -width / 2 + 0.025, 0.10, 0, 0.035, 0.08, 0.23, M.silver);
+  box(rack, width / 2 - 0.025, 0.10, 0, 0.035, 0.08, 0.23, M.silver);
+  const liquids = [M.blue, M.green, M.lightBlue, M.gold];
+  for (let i = 0; i < cols; i++) {
+    for (let row = 0; row < 2; row++) {
+      const tx = (i - (cols - 1) / 2) * 0.12;
+      const tz = row === 0 ? -0.055 : 0.055;
+      cyl(rack, tx, 0.235, tz, 0.041, 0.035, 0.27, M.glass, 16);
+      cyl(rack, tx, 0.16, tz, 0.030, 0.030, 0.12, liquids[(i + row) % liquids.length], 16);
+      cyl(rack, tx, 0.38, tz, 0.046, 0.046, 0.045, i % 2 ? M.blue : M.gold, 16);
+    }
+  }
+  return rack;
+}
+
+function makeMicroplate(parent, x, z) {
+  const plate = new THREE.Group();
+  plate.position.set(x, 0.985, z);
+  parent.add(plate);
+  box(plate, 0, 0.045, 0, 0.48, 0.075, 0.31, M.silver);
+  box(plate, 0, 0.087, 0, 0.44, 0.018, 0.28, M.white);
+  const wellMats = [M.blue, M.green, M.gold, M.lightBlue];
+  for (let row = 0; row < 4; row++) {
+    for (let col = 0; col < 6; col++) {
+      const well = cyl(plate, (col - 2.5) * 0.062, 0.101, (row - 1.5) * 0.057, 0.020, 0.020, 0.012, wellMats[(row + col) % wellMats.length], 12);
+      well.material = wellMats[(row + col) % wellMats.length];
+    }
+  }
+  return plate;
+}
+
+function makePetriDish(parent, x, z) {
+  const dish = new THREE.Group();
+  dish.position.set(x, 0.985, z);
+  parent.add(dish);
+  cyl(dish, 0, 0.026, 0, 0.135, 0.135, 0.045, M.glass, 28);
+  cyl(dish, 0, 0.052, 0, 0.122, 0.122, 0.012, M.silver, 28);
+  cyl(dish, 0.015, 0.059, -0.012, 0.073, 0.073, 0.006, M.green, 24);
+  return dish;
+}
+
+function makeAnalyser(parent, x, z) {
+  const g = new THREE.Group();
+  g.position.set(x, 0.985, z);
+  parent.add(g);
+  // Compact benchtop analyser casing with a recessed display and sample port.
+  box(g, 0, 0.255, 0, 0.68, 0.50, 0.46, M.silver);
+  box(g, 0, 0.505, -0.015, 0.60, 0.035, 0.40, M.white);
+  box(g, 0.015, 0.36, 0.237, 0.43, 0.25, 0.035, M.dark);
+
+  const screenCanvas = document.createElement('canvas');
+  screenCanvas.width = 320; screenCanvas.height = 180;
+  const sc = screenCanvas.getContext('2d');
+  sc.fillStyle = '#092137'; sc.fillRect(0, 0, 320, 180);
+  sc.strokeStyle = '#54d9ff'; sc.lineWidth = 3; sc.strokeRect(5, 5, 310, 170);
+  sc.fillStyle = '#dff6ff'; sc.font = 'bold 20px Arial'; sc.fillText('LIVE ASSAY', 16, 30);
+  sc.fillStyle = '#8ddbb7'; sc.font = '15px Arial'; sc.fillText('Signal stable', 16, 53);
+  sc.strokeStyle = '#65c6ff'; sc.lineWidth = 4; sc.beginPath();
+  [[18,130],[50,113],[82,122],[114,87],[146,96],[178,70],[210,85],[245,57],[294,64]].forEach(([px,py],i)=> i ? sc.lineTo(px,py) : sc.moveTo(px,py));
+  sc.stroke();
+  const displayTexture = new THREE.CanvasTexture(screenCanvas);
+  displayTexture.colorSpace = THREE.SRGBColorSpace;
+  const display = new THREE.Mesh(new THREE.PlaneGeometry(0.39, 0.205), new THREE.MeshBasicMaterial({ map: displayTexture }));
+  display.position.set(0.015, 0.36, 0.257); g.add(display);
+
+  // Sample drawer, status LEDs, ventilation slots and metal trim.
+  box(g, -0.16, 0.135, 0.237, 0.22, 0.10, 0.025, M.dark);
+  box(g, -0.16, 0.15, 0.253, 0.12, 0.012, 0.008, M.lightBlue);
+  for (let i = 0; i < 3; i++) sphere(g, 0.205 + i * 0.055, 0.14, 0.245, 0.018, i === 1 ? M.green : M.gold);
+  for (let i = 0; i < 4; i++) box(g, -0.27 + i * 0.055, 0.28, 0.237, 0.028, 0.012, 0.009, M.dark);
+  box(g, 0.23, 0.13, -0.04, 0.10, 0.10, 0.12, M.dark);
+  return g;
+}
+
+function makeCentrifuge(parent, x, z) {
+  const g = new THREE.Group();
+  g.position.set(x, 0.985, z);
+  parent.add(g);
+  cyl(g, 0, 0.13, 0, 0.225, 0.235, 0.25, M.silver, 28);
+  cyl(g, 0, 0.265, 0, 0.205, 0.205, 0.055, M.dark, 28);
+  cyl(g, 0, 0.300, 0, 0.184, 0.184, 0.025, M.glass, 28);
+  cyl(g, 0, 0.318, 0, 0.065, 0.065, 0.018, M.blue, 20);
+  // Control strip facing the viewer.
+  box(g, 0.07, 0.11, 0.22, 0.20, 0.065, 0.025, M.dark);
+  sphere(g, 0.01, 0.115, 0.238, 0.018, M.green);
+  sphere(g, 0.07, 0.115, 0.238, 0.018, M.gold);
+  return g;
+}
+
+const diseaseDiscoveryStation = stations.find(s => s.userData.id === 'disease');
+if (diseaseDiscoveryStation) {
+  makeMicroscope(diseaseDiscoveryStation, -0.61, 0.00, 0.60);
+  makePetriDish(diseaseDiscoveryStation, 0.10, -0.29);
+  makeMicroplate(diseaseDiscoveryStation, 0.03, 0.25);
+  makeSampleTubeRack(diseaseDiscoveryStation, 0.64, -0.20, 4);
+}
+
+const liveDataStation = stations.find(s => s.userData.id === 'dashboard');
+if (liveDataStation) {
+  makeAnalyser(liveDataStation, -0.48, -0.12);
+  makeCentrifuge(liveDataStation, 0.28, -0.17);
+  makeMicroplate(liveDataStation, -0.47, 0.34);
+  makeSampleTubeRack(liveDataStation, 0.64, 0.27, 4);
+}
+// Large wall-mounted lab operations dashboard: shows all key work in progress
+const dash = new THREE.Group(); dash.position.set(-6.7,2.85,-5.42); scene.add(dash); // moved to the left, replacing the former window position
+box(dash,0,0,0,5.7,1.65,.16,M.navy);
+box(dash,0,0,.1,5.48,1.43,.035,M.dark);
+const dashCanvas=document.createElement('canvas');dashCanvas.width=1200;dashCanvas.height=320;
+const dc=dashCanvas.getContext('2d');
+dc.fillStyle='#10263d';dc.fillRect(0,0,1200,320);
+dc.fillStyle='#f3c86f';dc.font='bold 36px system-ui';dc.fillText('LAB OPERATIONS • LIVE OVERVIEW',36,48);
+const dashboardRows=[
+ ['SAMPLE INTAKE','12 samples logged','#65c6ff'],
+ ['INSTRUMENTS','Microscope • analyser • dispenser','#8ddbb7'],
+ ['AI DATA ANALYSIS','Patterns and trends under review','#f3c86f'],
+ ['DISEASE RESEARCH','Potential signals flagged for validation','#8ad7ff'],
+ ['QUALITY & SAFETY','Controls • calibration • human review','#d8e2eb']
+];
+dashboardRows.forEach((r,i)=>{
+ const y=91+i*43;dc.fillStyle=r[2];dc.fillRect(36,y-15,12,12);
+ dc.fillStyle='#f4f8fc';dc.font='bold 21px system-ui';dc.fillText(r[0],62,y);
+ dc.fillStyle='#bed0df';dc.font='20px system-ui';dc.fillText(r[1],370,y);
+});
+const dashTex=new THREE.CanvasTexture(dashCanvas);dashTex.colorSpace=THREE.SRGBColorSpace;
+const dashScreen=new THREE.Mesh(new THREE.PlaneGeometry(5.45,1.42),new THREE.MeshBasicMaterial({map:dashTex}));
+dashScreen.position.z=.13;dash.add(dashScreen);
+// benches and extra friendly details
+for(let i=0;i<4;i++){const x=-7.5+i*4.9;box(scene,x,.45,-4.1,3.2,.9,.9,M.grey);box(scene,x,.94,-4.1,3.3,.12,1.0,M.white);for(let j=0;j<3;j++){cyl(scene,x-.8+j*.8,1.2,-4.05,.12,.12,.4,M.glass);cyl(scene,x-.8+j*.8,1.15,-4.05,.09,.09,.25,j===1?M.gold:M.blue)}}
+
+// Long white laboratory benches along both side walls, with a wash basin,
+// a detailed articulated robotic arm, and a standing teaching skeleton.
+(() => {
+  const benchWhite = mat(0xf6f9fb, 0.42, 0.10);
+  const benchEdge = mat(0xb8c7d2, 0.38, 0.38);
+  const stainless = mat(0xcbd7df, 0.25, 0.72);
+  const steelDark = mat(0x526879, 0.32, 0.58);
+  const basinInterior = mat(0x7893a3, 0.27, 0.35);
+  const bone = mat(0xf1ead8, 0.82, 0.02);
+  const boneShade = mat(0xd8cfbb, 0.82, 0.02);
+  const socket = mat(0x302c2a, 0.92, 0.0);
+
+  function makeWallBench(side) {
+    const sign = side === 'left' ? -1 : 1;
+    const bench = new THREE.Group();
+    bench.position.set(sign * 13.95, 0, 0.95);
+    scene.add(bench);
+
+    // Long porcelain-white worktop with a subtle stainless edge.
+    box(bench, 0, 1.00, 0, 1.30, 0.14, 8.30, benchWhite);
+    box(bench, 0, 0.919, 0, 1.27, 0.025, 8.24, benchEdge);
+
+    // Braced metal legs and a lower storage rail along the full bench.
+    [-3.95, -1.35, 1.35, 3.95].forEach(z => {
+      [-0.52, 0.52].forEach(x => {
+        box(bench, x, 0.49, z, 0.085, 0.91, 0.085, stainless);
+        box(bench, x, 0.075, z, 0.19, 0.07, 0.19, steelDark);
+      });
+    });
+    box(bench, 0, 0.37, -2.65, 1.05, 0.07, 0.075, benchEdge);
+    box(bench, 0, 0.37, 0, 1.05, 0.07, 0.075, benchEdge);
+    box(bench, 0, 0.37, 2.65, 1.05, 0.07, 0.075, benchEdge);
+
+    // Narrow splashback follows the wall but stays below the science posters.
+    box(bench, sign * 0.625, 1.205, 0, 0.045, 0.22, 8.18, benchWhite);
+    box(bench, sign * 0.595, 1.325, 0, 0.035, 0.025, 8.18, benchEdge);
+    return bench;
+  }
+
+  const leftWallBench = makeWallBench('left');
+  const rightWallBench = makeWallBench('right');
+
+  // LEFT: inset stainless wash basin, drain, mixer tap and two control knobs.
+  const wash = new THREE.Group();
+  wash.position.set(-13.95, 1.075, 1.45);
+  scene.add(wash);
+  // Recessed basin and raised porcelain rim.
+  box(wash, 0.015, 0.012, 0, 0.74, 0.025, 0.98, benchEdge);
+  box(wash, 0.015, 0.042, 0, 0.63, 0.035, 0.84, basinInterior);
+  box(wash, -0.39, 0.055, 0, 0.095, 0.075, 1.02, benchWhite);
+  box(wash, 0.42, 0.055, 0, 0.095, 0.075, 1.02, benchWhite);
+  box(wash, 0.015, 0.055, -0.50, 0.74, 0.075, 0.08, benchWhite);
+  box(wash, 0.015, 0.055, 0.50, 0.74, 0.075, 0.08, benchWhite);
+  // Sloped inner sides suggest a deep, easy-clean metal bowl.
+  box(wash, -0.25, 0.075, 0, 0.045, 0.06, 0.66, stainless);
+  box(wash, 0.28, 0.075, 0, 0.045, 0.06, 0.66, stainless);
+  box(wash, 0.015, 0.075, -0.35, 0.52, 0.06, 0.045, stainless);
+  box(wash, 0.015, 0.075, 0.35, 0.52, 0.06, 0.045, stainless);
+  cyl(wash, 0.015, 0.085, 0.05, 0.065, 0.065, 0.018, steelDark, 28);
+  cyl(wash, 0.015, 0.097, 0.05, 0.038, 0.038, 0.012, stainless, 24);
+
+  // Mixer faucet is mounted at the wall-facing edge and reaches over the bowl.
+  cyl(wash, -0.48, 0.205, -0.16, 0.045, 0.045, 0.25, stainless, 20);
+  sphere(wash, -0.48, 0.33, -0.16, 0.058, steelDark);
+  const faucetSpout = cyl(wash, -0.32, 0.335, -0.16, 0.031, 0.031, 0.32, stainless, 18);
+  faucetSpout.rotation.z = Math.PI / 2;
+  cyl(wash, -0.16, 0.305, -0.16, 0.025, 0.025, 0.09, stainless, 16);
+  [-0.34, 0.02].forEach((z, i) => {
+    cyl(wash, -0.48, 0.12, z, 0.042, 0.042, 0.055, steelDark, 18);
+    box(wash, -0.48, 0.155, z, 0.12, 0.035, 0.045, i ? mat(0x4caee8) : mat(0xf16e78));
+  });
+  // Small label fixed to the bench front edge.
+  const sinkLabelCanvas = document.createElement('canvas');
+  sinkLabelCanvas.width = 480; sinkLabelCanvas.height = 100;
+  const sinkLabelCtx = sinkLabelCanvas.getContext('2d');
+  sinkLabelCtx.fillStyle = '#f4f7fa'; sinkLabelCtx.fillRect(0, 0, 480, 100);
+  sinkLabelCtx.fillStyle = '#17344b'; sinkLabelCtx.font = 'bold 30px Arial'; sinkLabelCtx.textAlign = 'center';
+  sinkLabelCtx.fillText('WASH & RINSE STATION', 240, 62);
+  const sinkLabelTexture = new THREE.CanvasTexture(sinkLabelCanvas);
+  sinkLabelTexture.colorSpace = THREE.SRGBColorSpace;
+  const sinkLabel = new THREE.Mesh(new THREE.PlaneGeometry(0.95, 0.20), new THREE.MeshBasicMaterial({ map: sinkLabelTexture }));
+  sinkLabel.position.set(0, -0.04, 0.58); wash.add(sinkLabel);
+
+  // RIGHT: metal, multi-joint robotic arm with visible actuator housings and gripper.
+  const armRoot = new THREE.Group();
+  armRoot.position.set(13.82, 1.075, 1.30);
+  scene.add(armRoot);
+  const armShell = mat(0xdce6ed, 0.25, 0.72);
+  const armBlue = mat(0x287db0, 0.28, 0.48);
+  const armJoint = mat(0x354a5c, 0.24, 0.76);
+  const armRubber = mat(0x202d38, 0.7, 0.18);
+
+  function armLink(a, b, radius, material, radiusEnd = radius) {
+    const start = new THREE.Vector3(a[0], a[1], a[2]);
+    const end = new THREE.Vector3(b[0], b[1], b[2]);
+    const direction = end.clone().sub(start);
+    const mesh = new THREE.Mesh(new THREE.CylinderGeometry(radiusEnd, radius, direction.length(), 24), material);
+    mesh.position.copy(start).add(end).multiplyScalar(0.5);
+    mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction.normalize());
+    mesh.castShadow = true; mesh.receiveShadow = true; armRoot.add(mesh);
+    return mesh;
+  }
+  cyl(armRoot, 0, 0.075, 0, 0.31, 0.34, 0.15, armJoint, 36);
+  cyl(armRoot, 0, 0.16, 0, 0.24, 0.24, 0.055, armBlue, 36);
+  cyl(armRoot, 0, 0.23, 0, 0.16, 0.18, 0.11, armShell, 30);
+  sphere(armRoot, 0, 0.30, 0, 0.17, armJoint);
+  // First link angles upward and forward from the shoulder.
+  armLink([0, 0.31, 0], [0.28, 0.70, 0.035], 0.105, armShell, 0.13);
+  sphere(armRoot, 0.28, 0.70, 0.035, 0.145, armJoint);
+  cyl(armRoot, 0.28, 0.70, 0.105, 0.11, 0.11, 0.09, armBlue, 28);
+  armLink([0.30, 0.74, 0.035], [0.07, 1.10, 0.105], 0.085, armShell, 0.105);
+  sphere(armRoot, 0.07, 1.10, 0.105, 0.12, armJoint);
+  cyl(armRoot, 0.07, 1.10, 0.17, 0.075, 0.075, 0.11, armBlue, 24);
+  armLink([0.07, 1.10, 0.105], [0.07, 1.31, 0.16], 0.052, armShell, 0.062);
+  sphere(armRoot, 0.07, 1.31, 0.16, 0.085, armJoint);
+  // Tool flange and two opposing metal fingers make the end-effector legible.
+  box(armRoot, 0.07, 1.385, 0.20, 0.19, 0.11, 0.15, armBlue);
+  box(armRoot, 0.02, 1.47, 0.265, 0.045, 0.12, 0.055, armShell);
+  box(armRoot, 0.12, 1.47, 0.265, 0.045, 0.12, 0.055, armShell);
+  box(armRoot, 0.02, 1.49, 0.31, 0.035, 0.07, 0.035, armRubber);
+  box(armRoot, 0.12, 1.49, 0.31, 0.035, 0.07, 0.035, armRubber);
+  // Exposed actuator caps and fasteners on each major joint.
+  [-1, 1].forEach(s => {
+    cyl(armRoot, 0.28 + s * 0.09, 0.70, 0.035, 0.047, 0.047, 0.045, armShell, 20).rotation.z = Math.PI / 2;
+    sphere(armRoot, 0.28 + s * 0.115, 0.70, 0.035, 0.022, M.gold);
+  });
+  // Compact bench controller, with a small screen and status LEDs.
+  box(armRoot, -0.47, 0.10, 0.05, 0.34, 0.12, 0.28, armJoint);
+  box(armRoot, -0.47, 0.18, 0.195, 0.24, 0.12, 0.025, M.navy);
+  box(armRoot, -0.49, 0.19, 0.213, 0.11, 0.055, 0.01, M.lightBlue);
+  sphere(armRoot, -0.37, 0.19, 0.216, 0.022, M.green);
+  sphere(armRoot, -0.31, 0.19, 0.216, 0.022, M.gold);
+
+  // RIGHT CORNER: freestanding anatomical teaching skeleton on a small round stand.
+  const skel = new THREE.Group();
+  skel.position.set(13.45, 0, -4.48);
+  scene.add(skel);
+  const skeletonStand = mat(0x667c8c, 0.4, 0.5);
+  cyl(skel, 0, 0.06, 0, 0.25, 0.28, 0.09, skeletonStand, 32);
+  cyl(skel, 0, 0.16, -0.12, 0.035, 0.035, 0.20, skeletonStand, 16);
+
+  function skBone(a, b, radius = 0.025, material = bone) {
+    const start = new THREE.Vector3(a[0], a[1], a[2]);
+    const end = new THREE.Vector3(b[0], b[1], b[2]);
+    const direction = end.clone().sub(start);
+    const mesh = new THREE.Mesh(new THREE.CylinderGeometry(radius * 0.92, radius, direction.length(), 12), material);
+    mesh.position.copy(start).add(end).multiplyScalar(0.5);
+    mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction.normalize());
+    mesh.castShadow = true; mesh.receiveShadow = true; skel.add(mesh);
+    return mesh;
+  }
+  function skJoint(x, y, z, r = 0.045, material = bone) { return sphere(skel, x, y, z, r, material); }
+  function skCurve(points, radius = 0.022, material = bone) {
+    const curve = new THREE.CatmullRomCurve3(points.map(p => new THREE.Vector3(p[0], p[1], p[2])));
+    const mesh = new THREE.Mesh(new THREE.TubeGeometry(curve, 18, radius, 8, false), material);
+    mesh.castShadow = true; mesh.receiveShadow = true; skel.add(mesh); return mesh;
+  }
+
+  // Cranium, jaw, eye sockets, nasal opening and visible teeth.
+  sphere(skel, 0, 1.72, 0.02, 0.205, bone);
+  sphere(skel, 0, 1.585, 0.045, 0.137, boneShade);
+  box(skel, 0, 1.60, 0.142, 0.19, 0.075, 0.045, bone);
+  sphere(skel, -0.073, 1.755, 0.192, 0.052, socket);
+  sphere(skel, 0.073, 1.755, 0.192, 0.052, socket);
+  const noseCavity = new THREE.Mesh(new THREE.ConeGeometry(0.043, 0.075, 3), socket);
+  noseCavity.position.set(0, 1.675, 0.205); noseCavity.rotation.x = Math.PI; skel.add(noseCavity);
+  box(skel, 0, 1.615, 0.181, 0.112, 0.018, 0.015, socket);
+  for (let i = 0; i < 6; i++) box(skel, -0.046 + i * 0.0184, 1.608, 0.193, 0.013, 0.022, 0.013, bone);
+  // Neck vertebrae and central spine.
+  skBone([0, 1.48, 0], [0, 1.36, 0], 0.035, boneShade);
+  for (let i = 0; i < 8; i++) {
+    const y = 1.34 - i * 0.045;
+    skJoint(0, y, -0.005, 0.034, i % 2 ? bone : boneShade);
+    skBone([0, y, -0.015], [0, y - 0.015, -0.085], 0.018, bone);
+  }
+  // Collar bones and shoulder joints.
+  skCurve([[0,1.365,0.07],[-0.14,1.37,0.06],[-0.30,1.335,0.035],[-0.40,1.30,0.01]], 0.027, bone);
+  skCurve([[0,1.365,0.07],[0.14,1.37,0.06],[0.30,1.335,0.035],[0.40,1.30,0.01]], 0.027, bone);
+  skJoint(-0.41, 1.28, 0.015, 0.065, boneShade); skJoint(0.41, 1.28, 0.015, 0.065, boneShade);
+  // Sternum plus paired curved ribs: shaped as a recognisable rib cage.
+  skBone([0,1.31,0.12],[0,1.02,0.13],0.035,boneShade);
+  for (let i = 0; i < 6; i++) {
+    const y = 1.29 - i * 0.047;
+    const width = 0.29 + (i < 3 ? i * 0.018 : (5 - i) * 0.01);
+    for (const s of [-1, 1]) {
+      skCurve([[0,y+0.025,0.13],[s*width*0.62,y+0.025,0.09],[s*width,y-0.015,0.005],[s*width*0.72,y-0.085,-0.035],[0,y-0.075,0.025]], 0.019, i % 2 ? boneShade : bone);
+    }
+  }
+  // Floating lower ribs and paired pelvis/hip bones.
+  skCurve([[0,1.04,0.10],[-0.14,1.00,0.045],[-0.25,0.94,0.015]],0.018,boneShade);
+  skCurve([[0,1.04,0.10],[0.14,1.00,0.045],[0.25,0.94,0.015]],0.018,boneShade);
+  skCurve([[0,0.91,0.01],[-0.17,0.94,0.06],[-0.28,0.85,0.055],[-0.22,0.77,0.06],[0,0.79,0.085]],0.035,bone);
+  skCurve([[0,0.91,0.01],[0.17,0.94,0.06],[0.28,0.85,0.055],[0.22,0.77,0.06],[0,0.79,0.085]],0.035,bone);
+  skCurve([[-0.20,0.79,0.06],[-0.10,0.75,0.11],[0,0.78,0.13],[0.10,0.75,0.11],[0.20,0.79,0.06]],0.027,boneShade);
+
+  // Arms hanging naturally at the sides: humerus, paired forearm bones, wrists and fingers.
+  for (const s of [-1, 1]) {
+    const shoulder = [s*0.43,1.27,0.01], elbow = [s*0.54,0.99,0.035], wrist = [s*0.55,0.72,0.055];
+    skBone(shoulder, elbow, 0.043, bone);
+    skJoint(elbow[0], elbow[1], elbow[2], 0.045, boneShade);
+    skBone([s*0.51,0.97,0.055],[s*0.52,0.74,0.09],0.022,boneShade);
+    skBone([s*0.56,0.97,0.005],[s*0.58,0.74,0.015],0.021,bone);
+    skJoint(wrist[0], wrist[1], wrist[2], 0.032, bone);
+    // palm and five simplified metacarpals/finger bones
+    skBone([s*0.55,0.72,0.055],[s*0.57,0.65,0.075],0.032,boneShade);
+    for (let f = 0; f < 5; f++) {
+      const fx = s*(0.48 + f*0.045);
+      const length = f === 0 ? 0.09 : (f === 3 ? 0.12 : 0.14 - Math.abs(2-f)*0.018);
+      skBone([s*0.56,0.66,0.075],[fx,0.66-length*0.50,0.09],0.012,bone);
+      skBone([fx,0.66-length*0.50,0.09],[fx+s*0.006,0.66-length,0.092],0.010,boneShade);
+    }
+  }
+  // Femurs, kneecaps, tibia/fibula and feet, attached to the pelvis.
+  for (const s of [-1, 1]) {
+    const hip = [s*0.19,0.78,0.045], knee = [s*0.22,0.43,0.025], ankle = [s*0.23,0.13,0.02];
+    skJoint(hip[0], hip[1], hip[2], 0.065, boneShade);
+    skBone(hip, knee, 0.052, bone);
+    skJoint(knee[0], knee[1], knee[2], 0.055, boneShade);
+    skBone([s*0.20,0.41,0.045],[s*0.22,0.15,0.055],0.029,bone);
+    skBone([s*0.24,0.41,-0.005],ankle,0.020,boneShade);
+    skJoint(ankle[0], ankle[1], ankle[2], 0.035, bone);
+    // Anatomically shaped foot: heel and tarsals, five metatarsals, and distinct toe phalanges.
+    // The toes point toward the front of the lab (positive Z), with the big toe on the inner side.
+    const footX = s * 0.23;
+    skJoint(footX, 0.095, 0.075, 0.060, boneShade); // calcaneus / heel
+    skJoint(footX, 0.092, 0.125, 0.045, bone);      // midfoot tarsals
+    skBone([footX,0.105,0.075],[footX,0.105,0.145],0.026,boneShade);
+    for (let toe = 0; toe < 5; toe++) {
+      // Spread the metatarsals naturally across the width of the foot.
+      const lateral = (toe - 2) * 0.027;
+      const toeX = footX + lateral;
+      const baseX = footX + lateral * 0.48;
+      const metatarsalEnd = [toeX, 0.082, 0.205 - Math.abs(toe - 2) * 0.009];
+      skBone([footX + lateral * 0.15,0.095,0.115], metatarsalEnd, toe === 0 ? 0.014 : 0.012, bone);
+      skJoint(metatarsalEnd[0], metatarsalEnd[1], metatarsalEnd[2], 0.014, boneShade);
+      const isBigToe = toe === 0;
+      const middleZ = metatarsalEnd[2] + (isBigToe ? 0.038 : 0.032);
+      const tipZ = middleZ + (isBigToe ? 0.043 : 0.030 - toe * 0.002);
+      const middleX = toeX + lateral * 0.12;
+      const tipX = middleX + lateral * 0.08;
+      skBone(metatarsalEnd, [middleX,0.078,middleZ], isBigToe ? 0.012 : 0.009, boneShade);
+      skJoint(middleX,0.078,middleZ,0.010,bone);
+      skBone([middleX,0.078,middleZ],[tipX,0.073,tipZ], isBigToe ? 0.011 : 0.008, bone);
+      if (!isBigToe) {
+        const distalZ = tipZ + 0.018;
+        skJoint(tipX,0.073,tipZ,0.008,boneShade);
+        skBone([tipX,0.073,tipZ],[tipX + lateral*0.04,0.070,distalZ],0.0065,boneShade);
+      }
+    }
+  }
+
+  // Slim vertical support behind the pelvis so the anatomy model stands securely.
+  box(skel, 0, 0.55, -0.15, 0.035, 0.55, 0.035, skeletonStand);
+})();
+
+
+// cute robot mascot by the entry
+const bot=new THREE.Group();bot.position.set(-8.7,0,4.0);scene.add(bot);box(bot,0,.65,0,.65,.65,.5,M.blue);box(bot,0,1.1,0,.82,.48,.62,M.silver);box(bot,-.18,1.14,.33,.08,.09,.04,M.navy);box(bot,.18,1.14,.33,.08,.09,.04,M.navy);box(bot,0,.87,.34,.22,.045,.04,M.gold);cyl(bot,-.45,.98,0,.06,.06,.4,M.gold);sphere(bot,-.45,1.2,0,.1,M.gold);cyl(bot,.45,.98,0,.06,.06,.4,M.gold);sphere(bot,.45,1.2,0,.1,M.gold);
+// A real 3D, camera-facing speech bubble that belongs to the entry mascot.
+const mascotSpeechBubble = new THREE.Group();
+mascotSpeechBubble.position.set(-8.0, 2.18, 3.9);
+scene.add(mascotSpeechBubble);
+const mascotBubbleCanvas = document.createElement('canvas');
+mascotBubbleCanvas.width = 1024; mascotBubbleCanvas.height = 430;
+const mascotBubbleCtx = mascotBubbleCanvas.getContext('2d');
+mascotBubbleCtx.clearRect(0, 0, 1024, 430);
+mascotBubbleCtx.save();
+mascotBubbleCtx.shadowColor = '#65c6ff'; mascotBubbleCtx.shadowBlur = 25;
+mascotBubbleCtx.fillStyle = '#eaf8ff'; mascotBubbleCtx.strokeStyle = '#65c6ff'; mascotBubbleCtx.lineWidth = 9;
+// Draw the speech tail first so its join is hidden by the rounded main body.
+mascotBubbleCtx.beginPath(); mascotBubbleCtx.moveTo(185, 330); mascotBubbleCtx.lineTo(130, 408); mascotBubbleCtx.lineTo(285, 345); mascotBubbleCtx.closePath(); mascotBubbleCtx.fill(); mascotBubbleCtx.stroke();
+roundRect(mascotBubbleCtx, 22, 18, 980, 340, 48); mascotBubbleCtx.fill(); mascotBubbleCtx.stroke();
+mascotBubbleCtx.restore();
+mascotBubbleCtx.textAlign = 'left';
+mascotBubbleCtx.fillStyle = '#98772f'; mascotBubbleCtx.font = 'bold 28px Arial';
+mascotBubbleCtx.fillText('LABGUARD AI • YOUR LAB GUIDE', 70, 88);
+mascotBubbleCtx.fillStyle = '#09243b'; mascotBubbleCtx.font = 'bold 48px Arial';
+mascotBubbleCtx.fillText('HELLO, JUNIOR SCIENTIST!', 70, 156);
+mascotBubbleCtx.fillStyle = '#24435c'; mascotBubbleCtx.font = '31px Arial';
+mascotBubbleCtx.fillText('Hover here to explore AI in the lab.', 70, 218);
+mascotBubbleCtx.fillStyle = '#1676a5'; mascotBubbleCtx.font = 'bold 25px Arial';
+mascotBubbleCtx.fillText('DATA • DISCOVERY • ROBOTICS • SAFETY', 70, 290);
+const mascotBubbleTexture = new THREE.CanvasTexture(mascotBubbleCanvas);
+mascotBubbleTexture.colorSpace = THREE.SRGBColorSpace;
+const mascotBubbleMesh = new THREE.Mesh(
+  new THREE.PlaneGeometry(2.95, 1.24),
+  new THREE.MeshBasicMaterial({map:mascotBubbleTexture, transparent:true, side:THREE.DoubleSide, depthWrite:false})
+);
+mascotBubbleMesh.userData.isMascotWelcomeBubble = true;
+mascotSpeechBubble.add(mascotBubbleMesh);
+mascotSpeechBubble.userData.isMascotWelcomeBubble = true;
+
+// cartoon scientists: simple friendly 3D characters actively working at the benches
+const scientists=[];
+function makeScientist(name,position,skinTone,hairTone,coatTone,task){
+ const g=new THREE.Group();g.position.set(...position);scene.add(g);
+ const skin=mat(skinTone),hair=mat(hairTone),coat=mat(coatTone),pants=mat(0x304b68),shoe=mat(0x1c2d3c),eye=mat(0x10263d),glove=mat(0xf4f7fa),accent=mat(0x4caee8);
+ // legs and shoes
+ box(g,-.16,.32,0,.18,.55,.2,pants);box(g,.16,.32,0,.18,.55,.2,pants);box(g,-.16,.08,.08,.25,.12,.36,shoe);box(g,.16,.08,.08,.25,.12,.36,shoe);
+ // coat body, lapels and pocket
+ box(g,0,.92,0,.62,.78,.34,coat);box(g,-.12,1.14,.18,.13,.32,.035,M.white);box(g,.12,1.14,.18,.13,.32,.035,M.white);box(g,.19,.82,.18,.13,.16,.025,accent);
+ // neck and oversized cartoon head
+ cyl(g,0,1.37,0,.105,.105,.18,skin);sphere(g,0,1.68,.02,.34,skin);
+ // hair cap + side locks
+ sphere(g,0,1.83,-.015,.345,hair);box(g,-.26,1.68,.16,.1,.25,.12,hair);box(g,.26,1.68,.16,.1,.25,.12,hair);box(g,-.04,1.89,.28,.2,.1,.06,hair);
+ // eyes and smile
+ sphere(g,-.115,1.69,.322,.035,eye);sphere(g,.115,1.69,.322,.035,eye);box(g,0,1.56,.329,.12,.025,.025,mat(0xc66d70));
+ // arms; pivot groups animate while working
+ const armL=new THREE.Group();armL.position.set(-.34,1.19,0);g.add(armL);cyl(armL,0,-.2,0,.095,.09,.42,coat);sphere(armL,0,-.42,.02,.105,glove);armL.rotation.z=-.35;
+ const armR=new THREE.Group();armR.position.set(.34,1.19,0);g.add(armR);cyl(armR,0,-.2,0,.095,.09,.42,coat);sphere(armR,0,-.42,.02,.105,glove);armR.rotation.z=.35;
+ // tiny ID badge
+ box(g,-.2,1.08,.19,.1,.13,.025,M.gold);
+ g.userData={name,task,armL,armR,baseY:position[1]};scientists.push(g);return g;
+}
+// They stand at different stations, angled toward their instruments.
+const scientistA=makeScientist('Dr. Nova',[-6.0,0,-1.45],0x9a623f,0x30243a,0xf5f8fc,'pipette');scientistA.rotation.y=.18;
+const scientistB=makeScientist('Dr. Sky',[2.65,0,-1.45],0xf1c49c,0x6b3e25,0xffffff,'microscope');scientistB.rotation.y=-.15;
+const scientistC=makeScientist('Dr. River',[1.8,0,4.5],0xc98762,0x182536,0xe8f2fa,'typing');scientistC.rotation.y=Math.PI;
+const scientistD=makeScientist('Dr. Alex',[5.6,0,-3.65],0xd99e78,0x41302b,0xf9fbff,'typing');scientistD.rotation.y=Math.PI;
+// Floating name tags make the human activity obvious without cluttering the machines.
+for(const person of scientists){const tag=new THREE.Mesh(new THREE.PlaneGeometry(1.35,.32),roundedLabel(person.userData.name));tag.position.set(0,2.28,.02);person.add(tag)}
+
+// More realistic helper robots: three mobile lab couriers and two scientist-assistant units
+const movingRobots=[];
+function makeRobotBody(name, position, style='walker'){
+ const g=new THREE.Group(); g.position.set(...position); scene.add(g);
+ const shell=mat(0xd9e5ee,.34,.38), edge=mat(0x5a7890,.35,.55), darkJoint=mat(0x263b50,.42,.35), visor= new THREE.MeshPhysicalMaterial({color:0x17354e,metalness:.45,roughness:.2,clearcoat:.8}), led=mat(0x65c6ff,.3,.2), amber=mat(0xf3c86f,.35,.25), rubber=mat(0x24313d,.85,.05);
+ // torso, chest status panel, shoulder joints
+ box(g,0,1.02,0,.55,.58,.34,shell);
+ box(g,1e-3,1.08,.178,.34,.22,.025,visor);
+ box(g,-.09,1.1,.198,.045,.045,.018,led); box(g,.02,1.1,.198,.045,.045,.018,led); box(g,.11,1.1,.198,.045,.045,.018,amber);
+ sphere(g,-.34,1.23,0,.105,edge); sphere(g,.34,1.23,0,.105,edge);
+ // head and dark glass face
+ box(g,0,1.55,.015,.48,.36,.38,shell);
+ box(g,0,1.55,.215,.39,.2,.035,visor);
+ sphere(g,-.105,1.57,.24,.035,led); sphere(g,.105,1.57,.24,.035,led);
+ box(g,0,1.475,.242,.09,.018,.015,amber);
+ cyl(g,0,1.78,0,.025,.025,.15,edge,12); sphere(g,0,1.87,0,.055,amber);
+ // articulated arms: upper arm, forearm, gripper
+ const arms=[];
+ for(const side of [-1,1]){
+  const arm=new THREE.Group(); arm.position.set(side*.34,1.22,0);g.add(arm);
+  cyl(arm,0,-.16,0,.075,.07,.28,edge,14); sphere(arm,0,-.31,.015,.075,darkJoint);
+  const fore=new THREE.Group();fore.position.set(0,-.31,.015);arm.add(fore);
+  cyl(fore,0,-.13,0,.06,.055,.23,shell,14);sphere(fore,0,-.255,.025,.07,edge);
+  box(fore,-.045,-.3,.07,.035,.12,.045,amber);box(fore,.045,-.3,.07,.035,.12,.045,amber);
+  arms.push({arm,fore,side});
+ }
+ let legs=[];
+ if(style==='walker'){
+  for(const side of [-1,1]){
+   const hip=new THREE.Group();hip.position.set(side*.15,.75,0);g.add(hip);
+   sphere(hip,0,0,0,.085,darkJoint);cyl(hip,0,-.18,0,.07,.065,.32,edge,14);
+   sphere(hip,0,-.35,.015,.07,darkJoint);box(hip,0,-.405,.09,.16,.08,.25,rubber);
+   legs.push({hip,side});
+  }
+ }else{
+  // low autonomous wheeled base for safe close-up assistance at benches
+  box(g,0,.19,0,.68,.25,.52,edge);
+  for(const x of [-.29,.29])for(const z of [-.19,.19]){
+   const wheel=cyl(g,x,.13,z,.095,.095,.07,rubber,16);wheel.rotation.x=Math.PI/2;
+  }
+  // short lift column and articulated tool arm
+  cyl(g,0,.48,-.02,.09,.11,.36,shell,16);sphere(g,0,.67,-.02,.12,amber);
+ }
+ const tag=new THREE.Mesh(new THREE.PlaneGeometry(1.55,.34),roundedLabel(name));tag.position.set(0,2.12,.02);g.add(tag);
+ g.userData={arms,legs,style,baseY:position[1]};movingRobots.push(g);return g;
+}
+// Couriers patrol clear aisles and move sample racks between stations.
+const courier1=makeRobotBody('ROVER 01',[-8.6,0,-.1],'walker');
+const courier2=makeRobotBody('ROVER 02',[0,0,4.2],'walker');
+const courier3=makeRobotBody('ROVER 03',[8.2,0,-.2],'walker');
+// ROVER 01 carries a visible sample rack on a secure front-mounted transport tray.
+const sampleCarrier = new THREE.Group();
+sampleCarrier.position.set(0,.88,.34);
+courier1.add(sampleCarrier);
+box(sampleCarrier,0,0,0,.62,.09,.38,M.dark);
+box(sampleCarrier,0,.055,0,.56,.035,.32,M.silver);
+for(let i=0;i<4;i++){
+  cyl(sampleCarrier,-.21+i*.14,.19,0,.045,.045,.23,M.glass,14);
+  cyl(sampleCarrier,-.21+i*.14,.17,0,.034,.034,.16,i%2?M.lightBlue:M.green,14);
+  cyl(sampleCarrier,-.21+i*.14,.315,0,.05,.05,.045,M.gold,14);
+}
+const carrierLabel=new THREE.Mesh(new THREE.PlaneGeometry(.58,.18),roundedLabel('SAMPLE RUN'));
+carrierLabel.position.set(0,.08,.205);sampleCarrier.add(carrierLabel);
+// Assistant units stay beside scientists and use articulated grippers near instruments.
+const assistant1=makeRobotBody('ASSIST 01',[-4.9,0,-1.8],'assistant');
+const assistant2=makeRobotBody('ASSIST 02',[3.8,0,-1.8],'assistant');
+// camera movement / pointer look
+let yaw=0,pitch=0,dragging=false,px=0,py=0,downX=0,downY=0,hasDragged=false,move={forward:false,back:false,left:false,right:false};const raycaster=new THREE.Raycaster(),mouse=new THREE.Vector2();
+const mascotInfoPanel = document.getElementById('mascot-info');
+const mascotInfoClose = document.getElementById('mascot-info-close');
+function openMascotInfo(){
+  mascotInfoPanel.classList.add('is-open');
+  mascotInfoPanel.setAttribute('aria-hidden','false');
+}
+function closeMascotInfo(){
+  mascotInfoPanel.classList.remove('is-open');
+  mascotInfoPanel.setAttribute('aria-hidden','true');
+}
+mascotInfoClose.addEventListener('click',closeMascotInfo);
+window.addEventListener('keydown',e=>{if(e.key==='Escape' && mascotInfoPanel.classList.contains('is-open'))closeMascotInfo();});
+function updateMascotHover(e){
+  if(e.pointerType && e.pointerType!=='mouse') return;
+  if(dragging) return;
+  const rect=renderer.domElement.getBoundingClientRect();
+  mouse.x=((e.clientX-rect.left)/rect.width)*2-1;
+  mouse.y=-((e.clientY-rect.top)/rect.height)*2+1;
+  raycaster.setFromCamera(mouse,camera);
+  const hits=raycaster.intersectObjects([mascotSpeechBubble,bot],true);
+  if(hits.length){openMascotInfo();renderer.domElement.style.cursor='pointer';}
+  else {renderer.domElement.style.cursor='grab';}
+}
+renderer.domElement.addEventListener('pointermove',updateMascotHover);
+function orient(){camera.rotation.order='YXZ';camera.rotation.y=yaw;camera.rotation.x=pitch}
+renderer.domElement.addEventListener('pointerdown',e=>{dragging=true;hasDragged=false;px=e.clientX;py=e.clientY;downX=e.clientX;downY=e.clientY;renderer.domElement.setPointerCapture(e.pointerId)});
+renderer.domElement.addEventListener('pointermove',e=>{if(!dragging)return;const dx=e.clientX-px,dy=e.clientY-py;if(Math.hypot(e.clientX-downX,e.clientY-downY)>9)hasDragged=true;px=e.clientX;py=e.clientY;yaw-=dx*.004;pitch=Math.max(-.6,Math.min(.55,pitch-dy*.003));orient()});
+renderer.domElement.addEventListener('pointerup',e=>{dragging=false;if(hasDragged)return;const rect=renderer.domElement.getBoundingClientRect();mouse.x=(e.clientX-rect.left)/rect.width*2-1;mouse.y=-((e.clientY-rect.top)/rect.height)*2+1;raycaster.setFromCamera(mouse,camera);const mascotHits=raycaster.intersectObjects([mascotSpeechBubble,bot],true);if(mascotHits.length){openMascotInfo();return;}const hits=raycaster.intersectObjects(stations,true);if(hits.length){let obj=hits[0].object;while(obj&&!obj.userData.id)obj=obj.parent;if(obj&&obj.userData.id)selectStation(obj)}});
+renderer.domElement.addEventListener('pointercancel',()=>dragging=false);
+function selectStation(g){closeMascotInfo();document.getElementById('title').textContent=g.userData.title;document.getElementById('desc').textContent=g.userData.desc;document.getElementById('chips').innerHTML=g.userData.chips.map(x=>`<span class="chip">${x}</span>`).join('');document.getElementById('fact').textContent='Science note: '+g.userData.fact;stations.forEach(s=>{s.userData.ring.material.color.set(s===g?0xf3c86f:0x65c6ff);s.userData.ring.material.opacity=s===g?1:.55})}
+document.getElementById('close').onclick=()=>document.getElementById('panel').style.display='none';
+document.getElementById('next').onclick=()=>{document.getElementById('panel').style.display='block';const current=stations.findIndex(s=>s.userData.title===document.getElementById('title').textContent);selectStation(stations[(current+1+stations.length)%stations.length])};
+document.getElementById('home').onclick=()=>{camera.position.set(0,1.65,7);yaw=0;pitch=0;orient();document.getElementById('panel').style.display='block';document.getElementById('title').textContent='Welcome, junior scientist!';document.getElementById('desc').textContent='Explore the cartoon laboratory. Select a machine to see how samples, instruments, AI analysis and scientific validation fit together.';document.getElementById('chips').innerHTML='<span class="chip">3D environment</span><span class="chip">Tap to explore</span><span class="chip">Blue • Grey • Gold</span>';document.getElementById('fact').textContent='Science note: AI can help identify patterns, but a prediction is not proof. Scientists check controls and validate results.'};
+document.querySelectorAll('[data-move]').forEach(b=>{const k=b.dataset.move;b.addEventListener('pointerdown',e=>{e.preventDefault();move[k]=true});['pointerup','pointerleave','pointercancel'].forEach(ev=>b.addEventListener(ev,()=>move[k]=false))});
+window.addEventListener('keydown',e=>{if(e.key==='ArrowUp'||e.key==='w')move.forward=true;if(e.key==='ArrowDown'||e.key==='s')move.back=true;if(e.key==='ArrowLeft'||e.key==='a')move.left=true;if(e.key==='ArrowRight'||e.key==='d')move.right=true});
+window.addEventListener('keyup',e=>{if(e.key==='ArrowUp'||e.key==='w')move.forward=false;if(e.key==='ArrowDown'||e.key==='s')move.back=false;if(e.key==='ArrowLeft'||e.key==='a')move.left=false;if(e.key==='ArrowRight'||e.key==='d')move.right=false});
+const clock=new THREE.Clock();
+function animate(){const dt=Math.min(clock.getDelta(),.04);if(!renderer.xr.isPresenting){const dir=new THREE.Vector3();if(move.forward)dir.z-=1;if(move.back)dir.z+=1;if(move.left)dir.x-=1;if(move.right)dir.x+=1;if(dir.lengthSq()){dir.normalize().applyAxisAngle(new THREE.Vector3(0,1,0),yaw);camera.position.addScaledVector(dir,dt*3.0);camera.position.x=Math.max(-13,Math.min(13,camera.position.x));camera.position.z=Math.max(-4.8,Math.min(9,camera.position.z));camera.position.y=1.65}}
+const t=clock.elapsedTime;mascotSpeechBubble.position.y=2.18+Math.sin(t*1.25)*.055;mascotSpeechBubble.lookAt(camera.position);stations.forEach((s,i)=>{s.position.y=.025*Math.sin(t*1.5+i);s.userData.ring.rotation.z=t*.15*(i%2?1:-1)});scientists.forEach((p,i)=>{const task=p.userData.task;p.userData.armL.rotation.z=(task==='microscope'?-0.8:task==='typing'?-0.65:-0.25)+Math.sin(t*3+i)*.08;p.userData.armR.rotation.z=(task==='pipette'?0.9:task==='microscope'?0.75:0.65)+Math.sin(t*3.6+i)*.12;p.position.y=.012*Math.sin(t*2+i)});
+floatingResearchPanels.forEach((panel,i)=>{panel.group.position.y=panel.baseY+Math.sin(t*0.9+i*1.4)*0.12;panel.group.rotation.y=Math.sin(t*0.35+i)*0.025});
+floatingAITechConsoles.forEach((panel,i)=>{panel.group.position.y=panel.baseY+Math.sin(t*0.78+i*1.1)*0.055;panel.group.rotation.y=Math.sin(t*0.28+i)*0.012});
+// Smooth patrol loops: robots turn into their direction of travel and swing legs like a walking gait.
+// The first rover follows a repeating, aisle-safe sample delivery route:
+ // intake -> central aisle -> AI analysis -> return to intake.
+const deliveryRoute = new THREE.CatmullRomCurve3([
+ new THREE.Vector3(-6.0,0,0.0),
+ new THREE.Vector3(-6.3,0,1.8),
+ new THREE.Vector3(-3.8,0,2.2),
+ new THREE.Vector3(-.8,0,2.2),
+ new THREE.Vector3(2.5,0,1.6),
+ new THREE.Vector3(5.2,0,.3),
+ new THREE.Vector3(5.8,0,-1.6),
+ new THREE.Vector3(3.4,0,-2.8),
+ new THREE.Vector3(-.5,0,-2.5),
+ new THREE.Vector3(-4.2,0,-1.7),
+ new THREE.Vector3(-6.0,0,0.0)
+],false,'centripetal');
+const deliveryProgress=(t*.035)%1;
+const roverPoint=deliveryRoute.getPointAt(deliveryProgress);
+const roverAhead=deliveryRoute.getPointAt((deliveryProgress+.002)%1);
+courier1.position.set(roverPoint.x,.018*Math.sin(t*3),roverPoint.z);
+courier1.rotation.y=Math.atan2(roverAhead.x-roverPoint.x,roverAhead.z-roverPoint.z);
+courier1.userData.legs.forEach((leg,j)=>{leg.hip.rotation.x=Math.sin(t*7+j*Math.PI)*.4});
+courier1.userData.arms.forEach((arm,j)=>{arm.arm.rotation.x=Math.sin(t*4+j)*.08;arm.arm.rotation.z=arm.side*(.12+Math.sin(t*5+j)*.06)});
+// Two other rovers patrol their own clear aisles.
+const patrols=[
+ {g:courier2,cx:0,cz:3.4,rx:2.0,rz:.65,speed:.22,phase:2.1},
+ {g:courier3,cx:7.4,cz:.2,rx:1.0,rz:2.0,speed:.20,phase:4.1}
+];
+patrols.forEach((p,i)=>{const a=t*p.speed+p.phase;const nx=p.cx+Math.cos(a)*p.rx,nz=p.cz+Math.sin(a)*p.rz;const dx=-Math.sin(a)*p.rx,dz=Math.cos(a)*p.rz;p.g.position.set(nx,.018*Math.sin(t*3+i),nz);p.g.rotation.y=Math.atan2(dx,dz);p.g.userData.legs.forEach((leg,j)=>{leg.hip.rotation.x=Math.sin(t*5+p.phase+j*Math.PI)*.38});p.g.userData.arms.forEach((arm,j)=>{arm.arm.rotation.x=Math.sin(t*4+p.phase+j)*.12;arm.arm.rotation.z=arm.side*(.12+Math.sin(t*5+p.phase+j)*.08)});});
+// Assistant robots remain at their assigned workbenches, reach toward instruments, then retract.
+[{g:assistant1,x:-4.9,z:-1.8,phase:.2},{g:assistant2,x:3.8,z:-1.8,phase:2.5}].forEach((p,i)=>{p.g.position.set(p.x,.012*Math.sin(t*2+p.phase),p.z);p.g.rotation.y=i===0?.35:-.35;p.g.userData.arms.forEach((a,j)=>{a.arm.rotation.z=a.side*(.22+.42*Math.sin(t*1.7+p.phase+j*1.1));a.fore.rotation.x=-.25+.28*Math.sin(t*2.2+p.phase+j)});});
+bot.rotation.y=Math.sin(t*.6)*.25;renderer.render(scene,camera)}
+
+// Draggable D-pad: drives the same movement flags as the keyboard/mobile arrows.
+const dpad = document.getElementById('dpad');
+const dpadStick = document.getElementById('dpad-stick');
+const dpadStatus = document.getElementById('dpad-status');
+let dpadDragging = false;
+const dpadMax = 37;
+const dpadDeadZone = 9;
+function resetDpad() {
+  dpadDragging = false;
+  dpadStick.style.transform = 'translate(0px, 0px)';
+  move.forward = move.back = move.left = move.right = false;
+  dpadStatus.textContent = 'Move: idle';
+  dpadStick.setAttribute('aria-valuenow', '0');
+}
+function updateDpad(e) {
+  if (!dpadDragging) return;
+  const rect = dpad.getBoundingClientRect();
+  let x = e.clientX - (rect.left + rect.width / 2);
+  let y = e.clientY - (rect.top + rect.height / 2);
+  const length = Math.hypot(x, y);
+  if (length > dpadMax) { x = x / length * dpadMax; y = y / length * dpadMax; }
+  dpadStick.style.transform = `translate(${x}px, ${y}px)`;
+  move.forward = move.back = move.left = move.right = false;
+  if (Math.hypot(x, y) > dpadDeadZone) {
+    // Dominant-axis movement avoids accidental diagonal drift.
+    if (Math.abs(x) > Math.abs(y)) move[x > 0 ? 'right' : 'left'] = true;
+    else move[y > 0 ? 'back' : 'forward'] = true;
+  }
+  const active = move.forward ? 'forward' : move.back ? 'back' : move.left ? 'left' : move.right ? 'right' : 'idle';
+  dpadStatus.textContent = 'Move: ' + active;
+  dpadStick.setAttribute('aria-valuenow', String(Math.max(-1, Math.min(1, x / dpadMax))));
+}
+dpadStick.addEventListener('pointerdown', e => {
+  e.preventDefault();
+  dpadDragging = true;
+  dpadStick.setPointerCapture(e.pointerId);
+  updateDpad(e);
+});
+dpadStick.addEventListener('pointermove', updateDpad);
+dpadStick.addEventListener('pointerup', resetDpad);
+dpadStick.addEventListener('pointercancel', resetDpad);
+dpadStick.addEventListener('lostpointercapture', () => { if (dpadDragging) resetDpad(); });
+dpadStick.addEventListener('keydown', e => {
+  const keyMap = {ArrowUp:'forward', ArrowDown:'back', ArrowLeft:'left', ArrowRight:'right'};
+  if (keyMap[e.key]) { e.preventDefault(); move.forward = move.back = move.left = move.right = false; move[keyMap[e.key]] = true; dpadStatus.textContent = 'Move: ' + keyMap[e.key]; }
+  if (e.key === 'Escape' || e.key === ' ') { e.preventDefault(); resetDpad(); }
+});
+dpadStick.addEventListener('keyup', e => { if (e.key.startsWith('Arrow')) resetDpad(); });
+
+renderer.setAnimationLoop(animate);
+window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+
+
+// ADDED: Dr. Mira, Dr. Chen, Dr. Sam and AI technology consoles
+const floatingAITechConsoles = [];
+const scientistE = makeScientist(
+  'Dr. Mira',
+  [-3.9, 0, 1.05],
+  0xe7b78e, 0x4b3027, 0xf6fbff, 'typing'
+);
+
+const scientistF = makeScientist(
+  'Dr. Chen',
+  [-0.15, 0, -2.55],
+  0xb77b57, 0x1f2836, 0xffffff, 'microscope'
+);
+
+const scientistG = makeScientist(
+  'Dr. Sam',
+  [6.8, 0, 1.15],
+  0x8c5c43, 0x262033, 0xf1f7fc, 'pipette'
+);
+
+scientistE.rotation.y = Math.PI;
+scientistF.rotation.y = Math.PI;
+scientistG.rotation.y = Math.PI;
+
+// Add matching name tags for the three additional scientists.
+for (const person of [scientistE, scientistF, scientistG]) {
+  const tag = new THREE.Mesh(
+    new THREE.PlaneGeometry(1.35, 0.32),
+    roundedLabel(person.userData.name)
+  );
+  tag.position.set(0, 2.28, 0.02);
+  person.add(tag);
+}
+
+function makeAITechConsole(title, subtitle, position, mode, accent) {
+  const group = new THREE.Group();
+  const consoleBaseY = 1.8;
+  group.position.set(position[0], consoleBaseY, position[2]);
+  scene.add(group);
+
+  // Subtle cyan projection columns and hover rings make the raised displays read as holographic.
+  const beamMaterial = new THREE.MeshBasicMaterial({ color: new THREE.Color(accent), transparent: true, opacity: 0.24, depthWrite: false });
+  for (const bx of [-0.50, 0.50]) {
+    const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.040, 0.72, 12), beamMaterial);
+    beam.position.set(bx, -0.27, 0.012);
+    group.add(beam);
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.095, 0.012, 8, 24), new THREE.MeshBasicMaterial({ color: new THREE.Color(accent), transparent: true, opacity: 0.72 }));
+    ring.rotation.x = Math.PI / 2;
+    ring.position.set(bx, -0.77, 0.012);
+    group.add(ring);
+  }
+  floatingAITechConsoles.push({ group, baseY: consoleBaseY });
+
+  // Monitor casing
+  const casing = new THREE.Mesh(
+    new THREE.BoxGeometry(1.5, 1, 0.2),
+    new THREE.MeshStandardMaterial({ color: 0x24364a })
+  );
+  casing.position.y = 0.65;
+  group.add(casing);
+
+  // Screen artwork
+  const canvas = document.createElement('canvas');
+  canvas.width = 640;
+  canvas.height = 400;
+
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#10263d';
+  ctx.fillRect(0, 0, 640, 400);
+
+  ctx.strokeStyle = accent;
+  ctx.lineWidth = 5;
+  ctx.strokeRect(14, 14, 612, 372);
+
+  ctx.fillStyle = '#f3c86f';
+  ctx.font = 'bold 30px Arial';
+  ctx.fillText(title, 30, 60);
+
+  ctx.fillStyle = '#d9e8f4';
+  ctx.font = '22px Arial';
+  ctx.fillText(subtitle, 30, 100);
+
+  if (mode === 'vision') {
+    // Simulated image-recognition detection boxes
+    ctx.fillStyle = '#8ddbb7';
+    ctx.fillText('IMAGE PATTERN SCAN', 30, 145);
+
+    for (let i = 0; i < 5; i++) {
+      ctx.strokeStyle = i === 2 ? '#f3c86f' : accent;
+      ctx.strokeRect(40 + i * 112, 190 + (i % 2) * 20, 65, 60);
+    }
+
+    ctx.fillStyle = '#8ddbb7';
+    ctx.fillText('Patterns highlighted', 30, 335);
+
+  } else if (mode === 'learning') {
+    // Simulated machine-learning data trend
+    ctx.fillText('SAMPLE DATA TREND', 30, 145);
+    ctx.strokeStyle = accent;
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(45, 310);
+    ctx.lineTo(145, 260);
+    ctx.lineTo(240, 280);
+    ctx.lineTo(340, 205);
+    ctx.lineTo(445, 220);
+    ctx.lineTo(580, 150);
+    ctx.stroke();
+
+    ctx.fillStyle = '#f3c86f';
+    [[45,310],[145,260],[240,280],
+     [340,205],[445,220],[580,150]].forEach(([x,y]) => {
+      ctx.beginPath();
+      ctx.arc(x, y, 7, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+  } else {
+    // Simulated AI quality-control alerts
+    ctx.fillStyle = '#8ddbb7';
+    ctx.font = 'bold 25px Arial';
+    ctx.fillText('✓ Routine quality check', 30, 190);
+
+    ctx.fillStyle = '#f3c86f';
+    ctx.fillText('! Unusual reading flagged', 30, 250);
+
+    ctx.fillStyle = '#d9e8f4';
+    ctx.font = '20px Arial';
+    ctx.fillText('Scientist review required', 30, 315);
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+
+  const screen = new THREE.Mesh(
+    new THREE.PlaneGeometry(1.25, 0.78),
+    new THREE.MeshBasicMaterial({ map: texture })
+  );
+
+  screen.position.set(0, 0.65, 0.112);
+  group.add(screen);
+
+  // Label above each screen
+  const label = new THREE.Mesh(
+    new THREE.PlaneGeometry(1.8, 0.34),
+    roundedLabel(title)
+  );
+
+  label.position.set(0, 1.45, 0);
+  group.add(label);
+
+  return group;
+}
+
+// 1. AI Computer Vision
+makeAITechConsole(
+  'AI VISION SCAN',
+  'Image pattern detection',
+  [-3.9, 0, -0.45],
+  'vision',
+  '#65c6ff'
+);
+
+// 2. Machine Learning
+makeAITechConsole(
+  'MACHINE LEARNING',
+  'Trend analysis',
+  [-0.15, 0, -0.25],
+  'learning',
+  '#8ddbb7'
+);
+
+// 3. AI Quality Control
+makeAITechConsole(
+  'AI QUALITY CHECK',
+  'Flag unusual readings',
+  [6.8, 0, -0.35],
+  'quality',
+  '#f3c86f'
+);
+
+// Floating holographic charts for data analysis and disease discovery.
+// The workstations stay on the floor; their charts hover above them like lab holograms.
+const floatingResearchPanels = [];
+function makeFloatingResearchPanel(title, subtitle, position, kind, accent) {
+  const group = new THREE.Group();
+  group.position.set(position[0], position[1], position[2]);
+  scene.add(group);
+
+  const width = 2.65, height = 1.62;
+  const frame = new THREE.LineSegments(
+    new THREE.EdgesGeometry(new THREE.BoxGeometry(width + 0.12, height + 0.12, 0.06)),
+    new THREE.LineBasicMaterial({ color: accent, transparent: true, opacity: 0.95 })
+  );
+  group.add(frame);
+
+  const canvas = document.createElement('canvas');
+  canvas.width = 800;
+  canvas.height = 490;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = 'rgba(7, 25, 43, 0.94)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.strokeStyle = accent;
+  ctx.lineWidth = 5;
+  ctx.strokeRect(12, 12, 776, 466);
+  ctx.fillStyle = '#62e5ff';
+  ctx.font = 'bold 31px Arial';
+  ctx.fillText(title, 34, 55);
+  ctx.fillStyle = '#d5f4ff';
+  ctx.font = '21px Arial';
+  ctx.fillText(subtitle, 34, 87);
+
+  // Chart area and grid
+  ctx.strokeStyle = '#234a63';
+  ctx.lineWidth = 1;
+  for (let y = 150; y <= 360; y += 52) {
+    ctx.beginPath(); ctx.moveTo(55, y); ctx.lineTo(745, y); ctx.stroke();
+  }
+  if (kind === 'data') {
+    const points = [[70,320],[165,270],[260,292],[355,205],[450,232],[545,170],[640,190],[730,135]];
+    ctx.strokeStyle = accent; ctx.lineWidth = 6; ctx.beginPath();
+    points.forEach(([x,y], i) => i ? ctx.lineTo(x,y) : ctx.moveTo(x,y));
+    ctx.stroke();
+    ctx.fillStyle = '#f3c86f';
+    points.forEach(([x,y]) => { ctx.beginPath(); ctx.arc(x,y,7,0,Math.PI*2); ctx.fill(); });
+    ctx.fillStyle = '#8ddbb7'; ctx.font = 'bold 19px Arial';
+    ctx.fillText('TREND PATTERN DETECTED', 36, 425);
+    ctx.fillStyle = '#d5f4ff'; ctx.font = '17px Arial';
+    ctx.fillText('Illustrative data • verify before conclusions', 36, 455);
+  } else {
+    const bars = [90,145,110,195,155,240,205,275];
+    bars.forEach((h,i) => {
+      ctx.fillStyle = i === 5 ? '#f3c86f' : accent;
+      ctx.fillRect(72 + i*82, 365-h, 42, h);
+    });
+    ctx.strokeStyle = '#f3c86f'; ctx.lineWidth = 4;
+    ctx.strokeRect(470, 100, 255, 58);
+    ctx.fillStyle = '#f3c86f'; ctx.font = 'bold 20px Arial';
+    ctx.fillText('POTENTIAL SIGNAL', 485, 136);
+    ctx.fillStyle = '#8ddbb7'; ctx.font = 'bold 19px Arial';
+    ctx.fillText('Research lead — needs validation', 36, 425);
+    ctx.fillStyle = '#d5f4ff'; ctx.font = '17px Arial';
+    ctx.fillText('Not a diagnosis • scientist review required', 36, 455);
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  const screen = new THREE.Mesh(
+    new THREE.PlaneGeometry(width, height),
+    new THREE.MeshBasicMaterial({ map: texture, transparent: true, side: THREE.DoubleSide, depthWrite: false })
+  );
+  screen.position.z = 0.035;
+  group.add(screen);
+
+  // Small glowing anchor points make the floating effect visually clear.
+  for (const x of [-width/2 + 0.12, width/2 - 0.12]) {
+    const orb = new THREE.Mesh(
+      new THREE.SphereGeometry(0.045, 12, 10),
+      new THREE.MeshBasicMaterial({ color: accent })
+    );
+    orb.position.set(x, -height/2 - 0.12, 0.02);
+    group.add(orb);
+  }
+  floatingResearchPanels.push({ group, baseY: position[1] });
+  return group;
+}
+
+makeFloatingResearchPanel(
+  'AI DATA ANALYSIS', 'Patterns, trends and sample measurements',
+  [4.15, 3.15, -0.75], 'data', '#65c6ff'
+);
+makeFloatingResearchPanel(
+  'DISEASE DISCOVERY', 'Potential signals for further research',
+  [7.25, 3.05, 1.25], 'disease', '#8ddbb7'
+);
+
+/* ==========================================
+   LABGUARD AI — FLOATING HOLOGRAM DASHBOARD
+   Visual simulation for the 3D lab
+========================================== */
+
+const labguardMonitor = new THREE.Group();
+scene.add(labguardMonitor);
+
+// Giant glass-like hologram panel
+const monitorGlass = new THREE.Mesh(
+  new THREE.PlaneGeometry(8.2, 4.5),
+  new THREE.MeshBasicMaterial({
+    color: 0x09243b,
+    transparent: true,
+    opacity: 0.88,
+    side: THREE.DoubleSide,
+    depthWrite: false
+  })
+);
+labguardMonitor.add(monitorGlass);
+
+// Glowing cyan border
+const monitorFrame = new THREE.LineSegments(
+  new THREE.EdgesGeometry(
+    new THREE.BoxGeometry(8.35, 4.65, 0.08)
+  ),
+  new THREE.LineBasicMaterial({
+    color: 0x55ddff,
+    transparent: true,
+    opacity: 0.95
+  })
+);
+labguardMonitor.add(monitorFrame);
+
+// Canvas-based monitoring interface
+const monitorCanvas = document.createElement('canvas');
+monitorCanvas.width = 1400;
+monitorCanvas.height = 760;
+const monitorCtx = monitorCanvas.getContext('2d');
+const monitorTexture = new THREE.CanvasTexture(monitorCanvas);
+monitorTexture.colorSpace = THREE.SRGBColorSpace;
+
+const monitorUI = new THREE.Mesh(
+  new THREE.PlaneGeometry(8.05, 4.35),
+  new THREE.MeshBasicMaterial({
+    map: monitorTexture,
+    transparent: true,
+    side: THREE.DoubleSide,
+    depthWrite: false
+  })
+);
+monitorUI.position.z = 0.055;
+labguardMonitor.add(monitorUI);
+
+function drawLabguardDashboard(time = 0) {
+  const c = monitorCtx;
+  const W = monitorCanvas.width;
+  const H = monitorCanvas.height;
+  c.clearRect(0, 0, W, H);
+  c.fillStyle = '#07192b';
+  c.fillRect(0, 0, W, H);
+
+  // Header
+  c.fillStyle = '#62e5ff';
+  c.font = 'bold 43px Arial';
+  c.fillText('LABGUARD AI', 45, 65);
+  c.fillStyle = '#d5f4ff';
+  c.font = '22px Arial';
+  c.fillText('INTELLIGENT LABORATORY MONITORING', 45, 103);
+  c.fillStyle = '#ffd66b';
+  c.font = 'bold 19px Arial';
+  c.fillText('SIMULATED DEMO DATA', 1010, 58);
+  c.strokeStyle = '#23617e';
+  c.lineWidth = 2;
+  c.strokeRect(30, 125, 1340, 590);
+
+  function panel(x, y, w, h, title) {
+    c.fillStyle = '#0c2940';
+    c.fillRect(x, y, w, h);
+    c.strokeStyle = '#246987';
+    c.strokeRect(x, y, w, h);
+    c.fillStyle = '#69e4ff';
+    c.font = 'bold 22px Arial';
+    c.fillText(title, x + 20, y + 34);
+  }
+
+  // Robotic sample delivery
+  panel(55, 150, 390, 210, 'ROBOTIC SAMPLE DELIVERY');
+  c.fillStyle = '#d9f6ff';
+  c.font = '23px Arial';
+  c.fillText('ROVER 01', 80, 220);
+  c.fillStyle = '#65e8b4';
+  c.fillText('● Delivery simulation active', 80, 265);
+  c.fillStyle = '#8cb9d1';
+  c.font = '19px Arial';
+  c.fillText('Route: Intake → Analysis', 80, 310);
+  c.fillStyle = '#183c52';
+  c.fillRect(80, 325, 320, 12);
+  const progress = 0.25 + 0.7 * (0.5 + 0.5 * Math.sin(time * 0.8));
+  c.fillStyle = '#65e8b4';
+  c.fillRect(80, 325, 320 * progress, 12);
+
+  // AI-assisted analysis
+  panel(465, 150, 390, 210, 'AI-ASSISTED ANALYSIS');
+  c.fillStyle = '#d9f6ff';
+  c.font = '22px Arial';
+  c.fillText('Computer vision', 490, 220);
+  c.fillText('Pattern recognition', 490, 265);
+  c.fillText('Machine learning', 490, 310);
+  c.fillStyle = '#65e8b4';
+  c.fillText('● Demo modules', 675, 220);
+  c.fillText('● Illustrative', 675, 265);
+  c.fillText('● Illustrative', 675, 310);
+
+  // Quality control
+  panel(875, 150, 440, 210, 'QUALITY CONTROL');
+  c.fillStyle = '#65e8b4';
+  c.font = 'bold 24px Arial';
+  c.fillText('✓ Routine check example', 900, 220);
+  c.fillStyle = '#ffd66b';
+  c.fillText('! Review flagged readings', 900, 275);
+  c.fillStyle = '#d9f6ff';
+  c.font = '20px Arial';
+  c.fillText('Scientist approval required', 900, 325);
+
+  // Animated illustrative graph
+  panel(55, 390, 800, 290, 'LAB DATA TREND — ILLUSTRATIVE');
+  c.strokeStyle = '#1d4c65';
+  c.lineWidth = 1;
+  for (let y = 455; y <= 620; y += 40) {
+    c.beginPath();
+    c.moveTo(90, y);
+    c.lineTo(820, y);
+    c.stroke();
+  }
+  c.beginPath();
+  c.strokeStyle = '#62e5ff';
+  c.lineWidth = 4;
+  for (let x = 0; x <= 710; x += 5) {
+    const y = 545 + Math.sin(x * 0.025 + time * 2) * 36 + Math.sin(x * 0.07 - time) * 12;
+    if (x === 0) c.moveTo(100 + x, y);
+    else c.lineTo(100 + x, y);
+  }
+  c.stroke();
+  c.fillStyle = '#8fb8cc';
+  c.font = '18px Arial';
+  c.fillText('Illustrative signal • Not real patient data', 90, 650);
+
+  // Scientist review
+  panel(875, 390, 440, 290, 'SCIENTIST REVIEW');
+  c.fillStyle = '#d9f6ff';
+  c.font = '22px Arial';
+  c.fillText('AI assists with data review.', 900, 460);
+  c.fillText('Scientists check the findings.', 900, 510);
+  c.fillStyle = '#65e8b4';
+  c.font = 'bold 24px Arial';
+  c.fillText('HUMAN OVERSIGHT', 900, 580);
+  c.fillStyle = '#8fb8cc';
+  c.font = '18px Arial';
+  c.fillText('Final decisions remain with', 900, 620);
+  c.fillText('qualified laboratory professionals.', 900, 650);
+
+  monitorTexture.needsUpdate = true;
+}
+
+// Place and draw the dashboard
+labguardMonitor.position.set(0, 5.0, -4.5);
+labguardMonitor.rotation.x = -0.08;
+drawLabguardDashboard(0);
+
+// Animate the hologram without interfering with the main Three.js loop
+function animateLabguardMonitor() {
+  const t = performance.now() * 0.001;
+  labguardMonitor.position.y = 5.0 + Math.sin(t * 0.8) * 0.13;
+  labguardMonitor.rotation.y = Math.sin(t * 0.3) * 0.025;
+  drawLabguardDashboard(t);
+  requestAnimationFrame(animateLabguardMonitor);
+}
+requestAnimationFrame(animateLabguardMonitor);
+
+</script>
+</body>
+</html>
